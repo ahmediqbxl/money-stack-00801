@@ -74,7 +74,7 @@ const BudgetSettings = () => {
     setEditValue('');
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast({
         title: "Invalid Category",
@@ -104,7 +104,7 @@ const BudgetSettings = () => {
       return;
     }
 
-    const newBudget = addBudget(newCategoryName.trim(), budget);
+    const newBudget = await addBudget(newCategoryName.trim(), budget);
     setNewCategoryName('');
     setNewCategoryBudget('');
     setIsAddCategoryOpen(false);
