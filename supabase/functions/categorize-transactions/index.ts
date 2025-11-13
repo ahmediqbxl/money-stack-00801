@@ -196,7 +196,7 @@ serve(async (req) => {
     });
 
     console.log('Successfully categorized', categorizedTransactions.length, 'transactions');
-    console.log('Categories assigned:', categorizedTransactions.map(t => ({ desc: t.description, cat: t.category })));
+    console.log('Categories assigned:', categorizedTransactions.map((t: any) => ({ desc: t.description, cat: t.category })));
 
     return new Response(
       JSON.stringify({ categorizedTransactions }),
@@ -205,8 +205,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error categorizing transactions:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

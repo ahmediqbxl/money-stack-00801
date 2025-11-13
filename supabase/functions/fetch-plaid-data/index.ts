@@ -59,7 +59,7 @@ serve(async (req) => {
     const accountsData = await accountsResponse.json()
     console.log('✅ Production accounts data received successfully:', {
       accountsCount: accountsData.accounts?.length || 0,
-      accounts: accountsData.accounts?.map(acc => ({
+      accounts: accountsData.accounts?.map((acc: any) => ({
         id: acc.account_id,
         name: acc.name,
         type: acc.type,
@@ -209,8 +209,9 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('💥 Error in fetch-plaid-data:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

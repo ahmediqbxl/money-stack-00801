@@ -92,7 +92,8 @@ Respond with a JSON object in this exact format:
 
   } catch (error) {
     console.error('Error in generate-budget-allocation function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
