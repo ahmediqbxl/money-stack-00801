@@ -63,7 +63,7 @@ const Auth = () => {
     } else {
       toast({
         title: "Account Created!",
-        description: "Welcome to MoneySpread! You can now start connecting your accounts.",
+        description: "Welcome to MoneyStack! You can now start connecting your accounts.",
       });
       navigate('/');
     }
@@ -78,7 +78,7 @@ const Auth = () => {
         <div className="space-y-8">
           <div className="text-center lg:text-left">
             <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-4">
-              MoneySpread
+              MoneyStack
             </h1>
             <p className="text-xl text-gray-600 mb-8">
               Connect your accounts and let AI analyze your spending to find personalized savings opportunities
