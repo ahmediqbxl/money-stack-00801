@@ -271,7 +271,7 @@ const Index = () => {
         <div className="flex justify-between items-center">
           <div className="text-center flex-1 space-y-4">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent leading-tight py-2">
-              MoneySpread
+              MoneyStack
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Connect your accounts and let AI analyze your spending to find personalized savings opportunities

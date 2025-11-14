@@ -44,7 +44,7 @@ serve(async (req) => {
     const request = {
       client_id: clientId,
       secret: secret,
-      client_name: 'MoneySpread',
+      client_name: 'MoneyStack',
       country_codes: ['US', 'CA'],
       language: 'en',
       user: {
