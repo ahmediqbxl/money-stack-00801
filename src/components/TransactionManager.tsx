@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, Filter, Edit, MoreHorizontal, ChevronDown, ChevronUp, CalendarIcon } from 'lucide-react';
+import { Search, Filter, Edit, MoreHorizontal, ChevronDown, ChevronUp, CalendarIcon, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePlaidData } from '@/hooks/usePlaidData';
 import { useDatabase } from '@/hooks/useDatabase';
@@ -21,6 +21,7 @@ const TransactionManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isOpen, setIsOpen] = useState(true);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
@@ -65,20 +66,28 @@ const TransactionManager = () => {
 
     // Sort transactions
     filtered.sort((a, b) => {
+      let comparison = 0;
+      
       switch (sortBy) {
         case 'date':
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          comparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+          break;
         case 'amount':
-          return Math.abs(b.amount) - Math.abs(a.amount);
+          comparison = Math.abs(b.amount) - Math.abs(a.amount);
+          break;
         case 'description':
-          return a.description.localeCompare(b.description);
+          comparison = a.description.localeCompare(b.description);
+          break;
         default:
           return 0;
       }
+      
+      // Apply sort direction
+      return sortDirection === 'desc' ? comparison : -comparison;
     });
 
     return filtered;
-  }, [transactions, searchTerm, selectedCategory, sortBy, dateRange]);
+  }, [transactions, searchTerm, selectedCategory, sortBy, sortDirection, dateRange]);
 
   const handleCategoryChange = async (transactionId: string, newCategory: string) => {
     try {
@@ -231,6 +240,19 @@ const TransactionManager = () => {
                 <SelectItem value="description">Description</SelectItem>
               </SelectContent>
             </Select>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="flex-shrink-0"
+              title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              <span className="sr-only">
+                {sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'}
+              </span>
+            </Button>
           </div>
 
           <div className="flex items-center justify-between mb-4">
