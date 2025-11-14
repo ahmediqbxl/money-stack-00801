@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Edit, MoreHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Search, Filter, Edit, MoreHorizontal, ChevronDown, ChevronUp, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { usePlaidData } from '@/hooks/usePlaidData';
 import { useDatabase } from '@/hooks/useDatabase';
+import { cn } from '@/lib/utils';
 
 const TransactionManager = () => {
   const { transactions, isLoading } = usePlaidData();
@@ -18,6 +22,10 @@ const TransactionManager = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date');
   const [isOpen, setIsOpen] = useState(true);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
 
   // Available categories for manual assignment
   const availableCategories = [
@@ -46,7 +54,13 @@ const TransactionManager = () => {
       
       const matchesCategory = selectedCategory === 'all' || transaction.category_name === selectedCategory;
       
-      return matchesSearch && matchesCategory;
+      // Date range filter
+      const transactionDate = new Date(transaction.date);
+      const matchesDateRange = 
+        (!dateRange.from || transactionDate >= dateRange.from) &&
+        (!dateRange.to || transactionDate <= dateRange.to);
+      
+      return matchesSearch && matchesCategory && matchesDateRange;
     });
 
     // Sort transactions
@@ -64,7 +78,7 @@ const TransactionManager = () => {
     });
 
     return filtered;
-  }, [transactions, searchTerm, selectedCategory, sortBy]);
+  }, [transactions, searchTerm, selectedCategory, sortBy, dateRange]);
 
   const handleCategoryChange = async (transactionId: string, newCategory: string) => {
     try {
@@ -148,6 +162,64 @@ const TransactionManager = () => {
                 ))}
               </SelectContent>
             </Select>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full md:w-[260px] justify-start text-left font-normal",
+                    !dateRange.from && !dateRange.to && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "MMM dd, yyyy")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-3 space-y-3">
+                  <div>
+                    <p className="text-sm font-medium mb-2">From Date</p>
+                    <Calendar
+                      mode="single"
+                      selected={dateRange.from}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-2">To Date</p>
+                    <Calendar
+                      mode="single"
+                      selected={dateRange.to}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                      className="pointer-events-auto"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setDateRange({ from: undefined, to: undefined })}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full md:w-40">
