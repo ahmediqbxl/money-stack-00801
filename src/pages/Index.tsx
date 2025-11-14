@@ -15,6 +15,7 @@ import TransactionManager from "@/components/TransactionManager";
 import BudgetSettings from "@/components/BudgetSettings";
 import { usePlaidData } from "@/hooks/usePlaidData";
 import AIInsights from "@/components/AIInsights";
+import CategoryTransactions from "@/components/CategoryTransactions";
 
 const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -483,6 +484,9 @@ const Index = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Category Transactions */}
+            <CategoryTransactions transactions={transactions} />
           </TabsContent>
 
           <TabsContent value="transactions" className="space-y-6">
