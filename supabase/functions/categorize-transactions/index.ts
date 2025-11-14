@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     const { transactions } = await req.json();
-    const openAIApiKey = Deno.env.get('open_api_key');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
       console.error('OpenAI API key not found in environment variables');
