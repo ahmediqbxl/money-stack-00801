@@ -1,11 +1,12 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Zap, TrendingUp, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { usePlaidData } from '@/hooks/usePlaidData';
+import { useDatabase } from '@/hooks/useDatabase';
 
 interface Transaction {
   id: string;
@@ -29,29 +30,44 @@ const AITransactionAnalysis = () => {
   const [insights, setInsights] = useState<CategoryInsight[]>([]);
   const [lastAnalyzed, setLastAnalyzed] = useState<string | null>(null);
   const { toast } = useToast();
-
-  // Sample transactions for demonstration
-  const sampleTransactions: Transaction[] = [
-    { id: '1', description: 'Metro Grocery Store', amount: -67.43, merchant: 'Metro', date: '2024-05-23' },
-    { id: '2', description: 'Uber Trip Downtown', amount: -23.50, merchant: 'Uber', date: '2024-05-22' },
-    { id: '3', description: 'Netflix Subscription', amount: -15.99, merchant: 'Netflix', date: '2024-05-22' },
-    { id: '4', description: 'Shell Gas Station', amount: -45.67, merchant: 'Shell', date: '2024-05-21' },
-    { id: '5', description: 'Shoppers Drug Mart', amount: -34.21, merchant: 'Shoppers', date: '2024-05-20' },
-    { id: '6', description: 'Tim Hortons Coffee', amount: -5.67, merchant: 'Tim Hortons', date: '2024-05-20' },
-    { id: '7', description: 'Amazon Purchase', amount: -89.99, merchant: 'Amazon', date: '2024-05-19' },
-    { id: '8', description: 'Hydro Ottawa Bill', amount: -120.45, merchant: 'Hydro Ottawa', date: '2024-05-18' },
-  ];
+  const { transactions: dbTransactions } = usePlaidData();
+  const { updateTransactionCategory } = useDatabase();
 
   const runAIAnalysis = async () => {
+    if (dbTransactions.length === 0) {
+      toast({
+        title: "No Transactions",
+        description: "Connect your bank account to analyze transactions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
+      // Prepare transactions for AI analysis
+      const transactionsForAI = dbTransactions.map(t => ({
+        id: t.id,
+        description: t.description,
+        amount: t.amount,
+        merchant: t.merchant || t.description,
+        date: t.date,
+      }));
+
       const { data, error } = await supabase.functions.invoke('categorize-transactions', {
-        body: { transactions: sampleTransactions }
+        body: { transactions: transactionsForAI }
       });
 
       if (error) throw error;
 
       const categorizedTransactions = data.categorizedTransactions;
+      
+      // Update each transaction in the database with AI-assigned category
+      const updatePromises = categorizedTransactions.map((transaction: Transaction & { category: string }) => {
+        return updateTransactionCategory(transaction.id, transaction.category);
+      });
+
+      await Promise.all(updatePromises);
       
       // Generate insights from categorized data
       const categoryTotals: { [key: string]: { total: number; count: number } } = {};
@@ -72,7 +88,7 @@ const AITransactionAnalysis = () => {
         total: data.total,
         count: data.count,
         percentage: (data.total / totalSpent) * 100,
-        trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down' // Mock trend data
+        trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down'
       })).sort((a, b) => b.total - a.total);
 
       setInsights(categoryInsights);
@@ -80,7 +96,7 @@ const AITransactionAnalysis = () => {
       
       toast({
         title: "Analysis Complete",
-        description: `Categorized ${categorizedTransactions.length} transactions using AI`,
+        description: `Categorized ${categorizedTransactions.length} transactions and saved to database`,
       });
 
     } catch (error) {
