@@ -70,13 +70,13 @@ const CategoryTransactions = ({ transactions }: CategoryTransactionsProps) => {
     return (
       <Card className="border-0 shadow-lg">
         <CardHeader>
-          <CardTitle>Category Transactions</CardTitle>
-          <CardDescription>View transactions by spending category</CardDescription>
+          <CardTitle>Spending by Category</CardTitle>
+          <CardDescription>Click on any category below to view its transactions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center text-gray-500 py-8">
-            <p>No transactions available</p>
-            <p className="text-sm">Connect your accounts to see categorized transactions</p>
+            <p>No expense transactions available</p>
+            <p className="text-sm">Connect your accounts or add transactions to see categorized spending</p>
           </div>
         </CardContent>
       </Card>
@@ -86,8 +86,8 @@ const CategoryTransactions = ({ transactions }: CategoryTransactionsProps) => {
   return (
     <Card className="border-0 shadow-lg">
       <CardHeader>
-        <CardTitle>Category Transactions</CardTitle>
-        <CardDescription>View transactions by spending category</CardDescription>
+        <CardTitle>Spending by Category</CardTitle>
+        <CardDescription>Click on any category to view all transactions in that category</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {categoryData.map(({ category, transactions: txns, total, count }) => (
