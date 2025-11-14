@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import FlinksConnect from "@/components/FlinksConnect";
 import ConnectedAccounts from "@/components/ConnectedAccounts";
-import AITransactionAnalysis from "@/components/AITransactionAnalysis";
 import TransactionManager from "@/components/TransactionManager";
 import BudgetSettings from "@/components/BudgetSettings";
 import { usePlaidData } from "@/hooks/usePlaidData";
@@ -299,11 +298,6 @@ const Index = () => {
         {/* Connected Accounts Section */}
         <div className="max-w-4xl mx-auto">
           <ConnectedAccounts />
-        </div>
-
-        {/* AI Analysis Section */}
-        <div className="max-w-4xl mx-auto">
-          <AITransactionAnalysis />
         </div>
 
         {/* Overview Cards - Now Dynamic */}
