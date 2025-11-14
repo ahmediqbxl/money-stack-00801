@@ -485,8 +485,10 @@ const Index = () => {
               </Card>
             </div>
 
-            {/* Category Transactions */}
-            <CategoryTransactions transactions={transactions} />
+            {/* Category Transactions - Full Width */}
+            <div className="mt-6">
+              <CategoryTransactions transactions={transactions} />
+            </div>
           </TabsContent>
 
           <TabsContent value="transactions" className="space-y-6">
