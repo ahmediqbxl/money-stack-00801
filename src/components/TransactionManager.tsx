@@ -179,17 +179,14 @@ const TransactionManager = () => {
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Transactions</CardTitle>
-          <CardDescription>
-            {filteredTransactions.length} transactions • Click on categories to edit
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          <div className="border-t pt-4 mt-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">All Transactions</h3>
+            <p className="text-sm text-muted-foreground">
+              {filteredTransactions.length} transactions • Click on categories to edit
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -275,6 +272,7 @@ const TransactionManager = () => {
               </Button>
             </div>
           )}
+          </div>
             </CardContent>
           </CollapsibleContent>
         </Card>
