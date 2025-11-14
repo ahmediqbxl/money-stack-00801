@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Plus, Trash2, RefreshCw, Calendar } from 'lucide-react';
+import { Building2, Plus, Trash2, RefreshCw, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PlaidConnect from './PlaidConnect';
 import { usePlaidData } from '@/hooks/usePlaidData';
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const dateRangeOptions = [
   { days: 7, label: '1 Week' },
@@ -26,6 +27,7 @@ const dateRangeOptions = [
 
 const ConnectedAccounts = () => {
   const [showConnectNew, setShowConnectNew] = useState(false);
+  const [isRecentTransactionsOpen, setIsRecentTransactionsOpen] = useState(true);
   const { toast } = useToast();
   const { deleteAccount } = useDatabase();
   const {
@@ -226,44 +228,57 @@ const ConnectedAccounts = () => {
       )}
 
       {transactions.length > 0 && (
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle>Recent Transactions ({transactions.length})</CardTitle>
-            <CardDescription>
-              Latest transactions from your connected accounts (Auto-categorized by AI)
-              {lastFetchMetadata && lastFetchMetadata.totalAvailable > transactions.length && (
-                <span className="text-orange-600">
-                  {" "}• {lastFetchMetadata.totalAvailable - transactions.length} more available
-                </span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {transactions.slice(0, 10).map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{transaction.description}</p>
-                    <p className="text-xs text-gray-500">
-                      {transaction.merchant && `${transaction.merchant} • `}
-                      {transaction.category_name && (
-                        <Badge variant="outline" className="text-xs">{transaction.category_name}</Badge>
-                      )}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-medium text-sm ${
-                      transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
-                    }`}>
-                      {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-gray-500">{transaction.date}</p>
-                  </div>
+        <Collapsible open={isRecentTransactionsOpen} onOpenChange={setIsRecentTransactionsOpen}>
+          <Card className="border-0 shadow-md">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle>Recent Transactions ({transactions.length})</CardTitle>
+                  <CardDescription>
+                    Latest transactions from your connected accounts (Auto-categorized by AI)
+                    {lastFetchMetadata && lastFetchMetadata.totalAvailable > transactions.length && (
+                      <span className="text-orange-600">
+                        {" "}• {lastFetchMetadata.totalAvailable - transactions.length} more available
+                      </span>
+                    )}
+                  </CardDescription>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    {isRecentTransactionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {transactions.slice(0, 10).map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{transaction.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {transaction.merchant && `${transaction.merchant} • `}
+                          {transaction.category_name && (
+                            <Badge variant="outline" className="text-xs">{transaction.category_name}</Badge>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-medium text-sm ${
+                          transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
+                        }`}>
+                          {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-500">{transaction.date}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
     </div>
   );
