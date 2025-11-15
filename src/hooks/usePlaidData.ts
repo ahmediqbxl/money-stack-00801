@@ -270,5 +270,6 @@ export const usePlaidData = () => {
     fetchPlaidData,
     handlePlaidSuccess,
     lastFetchMetadata,
+    plaidAccessToken,
   };
 };
