@@ -105,13 +105,20 @@ export const useDatabase = () => {
   const updateTransactionCategory = async (transactionId: string, categoryName: string) => {
     try {
       await databaseService.updateTransactionCategory(transactionId, categoryName);
+      
+      // Update local state immediately
       setTransactions(prev =>
         prev.map(t =>
           t.id === transactionId
-            ? { ...t, category_name: categoryName, is_manual_category: true }
+            ? { ...t, category_name: categoryName, is_manual_category: true, updated_at: new Date().toISOString() }
             : t
         )
       );
+      
+      // Refetch to ensure we have the latest data
+      const updatedTransactions = await databaseService.getTransactions();
+      setTransactions(updatedTransactions);
+      
       toast({
         title: "Category Updated",
         description: `Transaction categorized as ${categoryName}`,
