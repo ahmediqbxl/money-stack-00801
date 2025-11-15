@@ -21,7 +21,11 @@ declare global {
   }
 }
 
-const PlaidConnect = ({ onSuccess }: PlaidConnectProps) => {
+export interface PlaidConnectRef {
+  connect: () => void;
+}
+
+const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onSuccess }, ref) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isPlaidLoaded, setIsPlaidLoaded] = useState(false);
@@ -29,6 +33,11 @@ const PlaidConnect = ({ onSuccess }: PlaidConnectProps) => {
   const [isCreatingToken, setIsCreatingToken] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Expose connect method to parent
+  React.useImperativeHandle(ref, () => ({
+    connect: handleConnectBank
+  }));
 
   // Check if Plaid SDK is loaded
   useEffect(() => {
@@ -247,6 +256,8 @@ const PlaidConnect = ({ onSuccess }: PlaidConnectProps) => {
       )}
     </>
   );
-};
+});
+
+PlaidConnect.displayName = 'PlaidConnect';
 
 export default PlaidConnect;

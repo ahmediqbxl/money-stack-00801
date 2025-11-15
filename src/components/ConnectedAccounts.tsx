@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import PlaidConnect from './PlaidConnect';
+import PlaidConnect, { PlaidConnectRef } from './PlaidConnect';
 import { usePlaidData } from '@/hooks/usePlaidData';
 import { useDatabase } from '@/hooks/useDatabase';
 import {
@@ -16,8 +16,8 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const ConnectedAccounts = () => {
-  const [showConnectNew, setShowConnectNew] = useState(false);
   const [isRecentTransactionsOpen, setIsRecentTransactionsOpen] = useState(true);
+  const plaidConnectRef = useRef<PlaidConnectRef>(null);
   const { toast } = useToast();
   const { deleteAccount } = useDatabase();
   const {
@@ -55,7 +55,6 @@ const ConnectedAccounts = () => {
   const handleConnectSuccess = async (accessToken: string) => {
     console.log('Connect success - passing token to handlePlaidSuccess:', accessToken.substring(0, 20) + '...');
     await handlePlaidSuccess(accessToken);
-    setShowConnectNew(false);
     
     toast({
       title: "Account Connected",
@@ -63,28 +62,19 @@ const ConnectedAccounts = () => {
     });
   };
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const handleAddAccount = () => {
+    plaidConnectRef.current?.connect();
+  };
 
-  if (showConnectNew) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Connect New Account</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowConnectNew(false)}
-          >
-            Back to Accounts
-          </Button>
-        </div>
-        <PlaidConnect onSuccess={handleConnectSuccess} />
-      </div>
-    );
-  }
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
 
   return (
     <div className="space-y-6">
+      {/* Hidden PlaidConnect component */}
+      <div style={{ display: 'none' }}>
+        <PlaidConnect ref={plaidConnectRef} onSuccess={handleConnectSuccess} />
+      </div>
+      
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Connected Accounts</h3>
@@ -119,7 +109,7 @@ const ConnectedAccounts = () => {
           )}
           <Button
             size="sm"
-            onClick={() => setShowConnectNew(true)}
+            onClick={handleAddAccount}
             className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -184,7 +174,7 @@ const ConnectedAccounts = () => {
               Connect your first bank account using Plaid to start tracking your finances
             </p>
             <Button
-              onClick={() => setShowConnectNew(true)}
+              onClick={handleAddAccount}
               className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
             >
               <Plus className="w-4 h-4 mr-2" />
