@@ -15,6 +15,7 @@ import BudgetSettings from "@/components/BudgetSettings";
 import { usePlaidData } from "@/hooks/usePlaidData";
 import AIInsights from "@/components/AIInsights";
 import CategoryTransactions from "@/components/CategoryTransactions";
+import SavingsGoal from "@/components/SavingsGoal";
 
 const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -490,6 +491,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="budgets" className="space-y-6">
+            <SavingsGoal transactions={transactions} />
             <BudgetSettings />
           </TabsContent>
 
