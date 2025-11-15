@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
-import { DollarSign, TrendingDown, TrendingUp, CreditCard, PiggyBank, AlertTriangle, Lightbulb, Target, LogOut, User } from 'lucide-react';
+import { DollarSign, TrendingDown, TrendingUp, CreditCard, PiggyBank, AlertTriangle, Lightbulb, Target, LogOut, User, Shield } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import FlinksConnect from "@/components/FlinksConnect";
 import ConnectedAccounts from "@/components/ConnectedAccounts";
 import TransactionManager from "@/components/TransactionManager";
@@ -19,9 +21,28 @@ import SavingsGoal from "@/components/SavingsGoal";
 
 const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const { transactions, accounts } = usePlaidData();
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      setIsAdmin(data?.role === 'admin');
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   // Dynamic monthly spending data from actual transactions
   const monthlySpending = useMemo(() => {
@@ -284,6 +305,17 @@ const Index = () => {
               <User className="w-4 h-4" />
               <span className="text-sm">{user?.email}</span>
             </div>
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/admin')}
+                className="flex items-center space-x-2"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Admin Panel</span>
+              </Button>
+            )}
             <Button 
               variant="outline" 
               size="sm" 
