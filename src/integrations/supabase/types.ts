@@ -185,6 +185,7 @@ export type Database = {
           id: string
           is_manual_category: boolean
           merchant: string | null
+          notes: string | null
           updated_at: string
           user_id: string
         }
@@ -199,6 +200,7 @@ export type Database = {
           id?: string
           is_manual_category?: boolean
           merchant?: string | null
+          notes?: string | null
           updated_at?: string
           user_id: string
         }
@@ -213,6 +215,7 @@ export type Database = {
           id?: string
           is_manual_category?: boolean
           merchant?: string | null
+          notes?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -24,6 +24,7 @@ export interface DatabaseTransaction {
   merchant?: string;
   category_name?: string;
   is_manual_category: boolean;
+  notes?: string | null;
 }
 
 export interface DatabaseCategory {
