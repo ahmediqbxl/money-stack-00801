@@ -255,6 +255,14 @@ export const usePlaidData = () => {
     await fetchPlaidData(accessToken, { daysBack: 90, maxTransactions: 2000 });
   };
 
+  // Auto-fetch data on login if we have a token
+  useEffect(() => {
+    if (plaidAccessToken && !hasFetched && !isLoading) {
+      console.log('🔄 Auto-fetching Plaid data on login...');
+      fetchPlaidData();
+    }
+  }, [plaidAccessToken, hasFetched, isLoading, fetchPlaidData]);
+
   return {
     accounts,
     transactions,
