@@ -121,13 +121,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-6">
-      <Button
-        variant="outline"
-        onClick={() => navigate('/')}
-        className="absolute top-4 left-4"
-      >
-        Back to Dashboard
-      </Button>
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Marketing content */}
         <div className="space-y-8">
