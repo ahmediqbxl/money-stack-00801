@@ -68,6 +68,40 @@ serve(async (req) => {
       }))
     })
 
+    // Fetch investment holdings for investment accounts
+    console.log('📡 Fetching investment holdings from Plaid Production API...')
+    let investmentHoldings = []
+    let investmentSecurities = []
+    
+    try {
+      const holdingsResponse = await fetch('https://production.plaid.com/investments/holdings/get', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: clientId,
+          secret: secret,
+          access_token: accessToken,
+        }),
+      })
+
+      if (holdingsResponse.ok) {
+        const holdingsData = await holdingsResponse.json()
+        investmentHoldings = holdingsData.holdings || []
+        investmentSecurities = holdingsData.securities || []
+        console.log('✅ Investment holdings received:', {
+          holdingsCount: investmentHoldings.length,
+          securitiesCount: investmentSecurities.length
+        })
+      } else {
+        const errorText = await holdingsResponse.text()
+        console.log('⚠️ Investment holdings fetch failed (may not have investment accounts):', errorText)
+      }
+    } catch (error) {
+      console.log('⚠️ Investment holdings fetch error (continuing without holdings):', error)
+    }
+
     // Calculate date range for transactions
     const endDate = new Date().toISOString().split('T')[0]
     const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -184,12 +218,15 @@ serve(async (req) => {
     const responseData = {
       accounts: accountsData.accounts || [],
       transactions: allTransactions,
+      holdings: investmentHoldings,
+      securities: investmentSecurities,
       metadata: {
         totalTransactions: allTransactions.length,
         totalAvailable,
         dateRange: { startDate, endDate },
         daysBack,
-        requestCount
+        requestCount,
+        hasInvestmentData: investmentHoldings.length > 0
       }
     }
 
