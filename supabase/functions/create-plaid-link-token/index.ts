@@ -50,7 +50,7 @@ serve(async (req) => {
       user: {
         client_user_id: userId,
       },
-      products: ['transactions'],
+      products: ['transactions', 'investments'],
     }
 
     console.log('🌐 Making request to Plaid Production API...')

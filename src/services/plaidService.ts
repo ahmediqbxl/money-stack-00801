@@ -29,12 +29,15 @@ interface PlaidTransaction {
 interface PlaidApiResponse {
   accounts: PlaidAccount[];
   transactions: PlaidTransaction[];
+  holdings?: any[];
+  securities?: any[];
   metadata?: {
     totalTransactions: number;
     totalAvailable: number;
     dateRange: { startDate: string; endDate: string };
     daysBack: number;
     requestCount: number;
+    hasInvestmentData?: boolean;
   };
 }
 
