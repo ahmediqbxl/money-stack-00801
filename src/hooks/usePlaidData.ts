@@ -223,11 +223,11 @@ export const usePlaidData = () => {
       setHasFetched(true);
       
       const successMessage = data.metadata 
-        ? `Successfully loaded ${savedAccounts.length} accounts and ${transformedTransactions.length} of ${data.metadata.totalAvailable} available transactions (${data.metadata.daysBack} days) - AI categorization will run automatically`
-        : `Successfully loaded ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions - AI categorization will run automatically`;
+        ? `Refreshed ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions from the last ${data.metadata.daysBack} days. Note: New transactions may take a few minutes to appear in Plaid.`
+        : `Refreshed ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions. Note: New transactions may take a few minutes to appear in Plaid.`;
       
       toast({
-        title: "Accounts Updated",
+        title: "✓ Refresh Complete",
         description: successMessage,
       });
 
