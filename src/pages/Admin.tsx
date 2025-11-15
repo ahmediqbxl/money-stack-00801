@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Check, X, Users, ArrowLeft } from 'lucide-react';
+import { Check, X, Users } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -149,21 +149,11 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Users className="w-8 h-8" />
-              User Management
-            </h1>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Users className="w-8 h-8" />
+            User Management
+          </h1>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-6">
