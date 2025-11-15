@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import PlaidConnect, { PlaidConnectRef } from './PlaidConnect';
 import { usePlaidData } from '@/hooks/usePlaidData';
 import { useDatabase } from '@/hooks/useDatabase';
+import TransactionNotes from './TransactionNotes';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -220,14 +221,27 @@ const ConnectedAccounts = () => {
                             <Badge variant="outline" className="text-xs">{transaction.category_name}</Badge>
                           )}
                         </p>
+                        {transaction.notes && (
+                          <p className="text-xs text-muted-foreground italic mt-1">
+                            Note: {transaction.notes}
+                          </p>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className={`font-medium text-sm ${
-                          transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
-                        }`}>
-                          {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-gray-500">{transaction.date}</p>
+                      <div className="flex items-center gap-2">
+                        <TransactionNotes
+                          transactionId={transaction.id}
+                          currentNotes={transaction.notes}
+                          description={transaction.description}
+                          onNotesUpdated={fetchPlaidData}
+                        />
+                        <div className="text-right">
+                          <p className={`font-medium text-sm ${
+                            transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
+                          }`}>
+                            {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-500">{transaction.date}</p>
+                        </div>
                       </div>
                     </div>
                   ))}
