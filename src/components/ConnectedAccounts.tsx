@@ -31,14 +31,10 @@ const ConnectedAccounts = () => {
   } = usePlaidData();
 
   const handleRefreshAccounts = async () => {
-    if (!plaidAccessToken && !localStorage.getItem('plaid_access_token')) {
-      toast({
-        title: "No Connection",
-        description: "Please connect a Plaid account first",
-        variant: "destructive",
-      });
-      return;
-    }
+    toast({
+      title: "Refreshing...",
+      description: "Fetching latest transactions from Plaid",
+    });
     await fetchPlaidData();
   };
 
