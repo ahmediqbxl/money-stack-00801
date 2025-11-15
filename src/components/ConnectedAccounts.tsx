@@ -30,10 +30,6 @@ const ConnectedAccounts = () => {
   } = usePlaidData();
 
   const handleRefreshAccounts = async () => {
-    toast({
-      title: "Refreshing...",
-      description: "Fetching latest transactions from Plaid",
-    });
     await fetchPlaidData();
   };
 
