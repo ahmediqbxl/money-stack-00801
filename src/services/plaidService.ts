@@ -61,9 +61,7 @@ class PlaidService {
         body: { userId }
       });
       
-      console.log('📊 Edge function response:');
-      console.log('  - Data:', data);
-      console.log('  - Error:', error);
+      console.log('📊 Edge function response received');
       
       if (error) {
         console.error('❌ Edge function error:', error);
@@ -90,7 +88,7 @@ class PlaidService {
   }
 
   async exchangePublicToken(publicToken: string): Promise<string> {
-    console.log('🔄 exchangePublicToken called with token:', publicToken.substring(0, 20) + '...');
+    console.log('🔄 Exchanging public token...');
     
     try {
       console.log('📡 Calling exchange-plaid-token edge function...');
@@ -99,9 +97,7 @@ class PlaidService {
         body: { publicToken }
       });
       
-      console.log('📊 Token exchange response:');
-      console.log('  - Data:', data);
-      console.log('  - Error:', error);
+      console.log('📊 Token exchange response received');
       
       if (error) {
         console.error('❌ Token exchange edge function error:', error);
@@ -127,8 +123,7 @@ class PlaidService {
   ): Promise<PlaidApiResponse> {
     const { daysBack = 90, maxTransactions = 2000 } = options;
     
-    console.log('🔍 getAccountsAndTransactions called with:', {
-      tokenPrefix: accessToken.substring(0, 20) + '...',
+    console.log('🔍 Fetching accounts and transactions:', {
       daysBack,
       maxTransactions
     });

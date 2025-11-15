@@ -61,7 +61,7 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
       return;
     }
 
-    console.log('🚀 Starting Plaid Link with production token:', linkToken.substring(0, 20) + '...');
+    console.log('🚀 Starting Plaid Link flow...');
     setIsConnecting(true);
     setError(null);
     
@@ -70,12 +70,12 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
       const linkHandler = window.Plaid.create({
         token: linkToken,
         onSuccess: async (public_token: string, metadata: any) => {
-          console.log('✅ Plaid Link success:', { public_token: public_token.substring(0, 20) + '...', metadata });
+          console.log('✅ Plaid Link success');
           
           try {
             console.log('🔄 Exchanging public token for access token...');
             const accessToken = await plaidService.exchangePublicToken(public_token);
-            console.log('✅ Production access token received:', accessToken.substring(0, 20) + '...');
+            console.log('✅ Access token received successfully');
             
             if (onSuccess) {
               onSuccess(accessToken);
@@ -140,7 +140,7 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
         setError(null);
         const token = await plaidService.createLinkToken(user.id);
         setLinkToken(token);
-        console.log('✅ Production link token created successfully:', token.substring(0, 20) + '...');
+        console.log('✅ Link token created successfully');
       } catch (error) {
         console.error('💥 Error creating link token:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

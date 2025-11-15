@@ -54,7 +54,7 @@ const ConnectedAccounts = () => {
   };
 
   const handleConnectSuccess = async (accessToken: string) => {
-    console.log('Connect success - passing token to handlePlaidSuccess:', accessToken.substring(0, 20) + '...');
+    console.log('✅ Connect success - handling Plaid connection...');
     await handlePlaidSuccess(accessToken);
     
     toast({

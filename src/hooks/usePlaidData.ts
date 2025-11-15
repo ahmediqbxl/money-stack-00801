@@ -100,7 +100,6 @@ export const usePlaidData = () => {
     const { daysBack = 90, maxTransactions = 2000 } = options;
     
     console.log('🚀 Starting enhanced Plaid data fetch:', {
-      tokenPrefix: tokenToUse.substring(0, 20) + '...',
       daysBack,
       maxTransactions
     });
@@ -245,7 +244,7 @@ export const usePlaidData = () => {
   }, [plaidAccessToken, isLoading, saveAccount, saveTransactions, toast, autoCategorizeTransactions]);
 
   const handlePlaidSuccess = async (accessToken: string) => {
-    console.log('🎯 Plaid success, storing token and immediately fetching enhanced data:', accessToken.substring(0, 20) + '...');
+    console.log('🎯 Plaid success, storing token and fetching data...');
     localStorage.setItem('plaid_access_token', accessToken);
     setPlaidAccessToken(accessToken);
     setHasFetched(false); // Reset to allow fetching with new token
