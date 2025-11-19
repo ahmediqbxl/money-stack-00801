@@ -196,31 +196,20 @@ const TransactionManager = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <div className="p-3 space-y-3">
-                  <div>
-                    <p className="text-sm font-medium mb-2">From Date</p>
-                    <Calendar
-                      mode="single"
-                      selected={dateRange.from}
-                      onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-2">To Date</p>
-                    <Calendar
-                      mode="single"
-                      selected={dateRange.to}
-                      onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
-                      className="pointer-events-auto"
-                    />
-                  </div>
-                  <div className="flex gap-2">
+                <div className="p-3">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateRange.from, to: dateRange.to }}
+                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                    initialFocus
+                    className="pointer-events-auto"
+                    numberOfMonths={1}
+                  />
+                  <div className="pt-3 border-t mt-3">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1"
+                      className="w-full"
                       onClick={() => setDateRange({ from: undefined, to: undefined })}
                     >
                       Clear
