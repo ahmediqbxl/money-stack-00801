@@ -68,23 +68,52 @@ class DatabaseService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Check if account already exists in database
-    const { data: existingAccount } = await supabase
+    // Check if account already exists (including inactive ones)
+    const { data: existingAccounts } = await supabase
       .from('accounts')
       .select('*')
       .eq('external_account_id', account.external_account_id)
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .single();
+      .eq('user_id', user.id);
 
-    if (existingAccount) {
-      console.log('Account already exists in database:', existingAccount);
+    if (existingAccounts && existingAccounts.length > 0) {
+      const existingAccount = existingAccounts[0];
+      
+      // If account is active, return it
+      if (existingAccount.is_active) {
+        console.log('Account already exists and is active:', existingAccount);
+        return {
+          ...existingAccount,
+          provider: existingAccount.provider as 'plaid' | 'flinks'
+        };
+      }
+      
+      // If account is inactive, reactivate it with updated data
+      console.log('Reactivating previously deleted account:', existingAccount.id);
+      const { data: reactivatedAccount, error: updateError } = await supabase
+        .from('accounts')
+        .update({
+          is_active: true,
+          balance: account.balance,
+          last_synced_at: account.last_synced_at,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingAccount.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error reactivating account:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Account reactivated successfully:', reactivatedAccount);
       return {
-        ...existingAccount,
-        provider: existingAccount.provider as 'plaid' | 'flinks'
+        ...reactivatedAccount,
+        provider: reactivatedAccount.provider as 'plaid' | 'flinks'
       };
     }
 
+    // Account doesn't exist, insert it
     const { data, error } = await supabase
       .from('accounts')
       .insert({
@@ -99,7 +128,7 @@ class DatabaseService {
       throw error;
     }
 
-    // Type assertion to handle the provider field correctly
+    console.log('✅ New account created successfully:', data);
     return {
       ...data,
       provider: data.provider as 'plaid' | 'flinks'
