@@ -87,14 +87,14 @@ class PlaidService {
     }
   }
 
-  async exchangePublicToken(publicToken: string): Promise<string> {
+  async exchangePublicToken(publicToken: string, userId: string): Promise<string> {
     console.log('🔄 Exchanging public token...');
     
     try {
       console.log('📡 Calling exchange-plaid-token edge function...');
       
       const { data, error } = await supabase.functions.invoke('exchange-plaid-token', {
-        body: { publicToken }
+        body: { publicToken, userId }
       });
       
       console.log('📊 Token exchange response received');
@@ -118,7 +118,8 @@ class PlaidService {
   }
 
   async getAccountsAndTransactions(
-    accessToken: string, 
+    accessToken: string,
+    userId: string,
     options: FetchOptions = {}
   ): Promise<PlaidApiResponse> {
     const { daysBack = 90, maxTransactions = 2000 } = options;
@@ -129,11 +130,12 @@ class PlaidService {
     });
     
     try {
-      console.log('📡 Calling fetch-plaid-data edge function with production API...');
+      console.log('📡 Calling fetch-plaid-data edge function...');
       
       const { data, error } = await supabase.functions.invoke('fetch-plaid-data', {
         body: { 
           accessToken,
+          userId,
           daysBack,
           maxTransactions
         }

@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,16 +16,35 @@ serve(async (req) => {
   try {
     console.log('🔄 fetch-plaid-data function called')
     
-    const { accessToken, daysBack = 90, maxTransactions = 2000 } = await req.json()
-    console.log('📊 Parameters received:', {
-      tokenPrefix: accessToken.substring(0, 20) + '...',
-      daysBack,
-      maxTransactions
-    })
+    const { accessToken, userId, daysBack = 90, maxTransactions = 2000 } = await req.json()
+    console.log('📊 Request parameters:', { daysBack, maxTransactions })
     
-    // Get Plaid credentials from environment
-    const clientId = Deno.env.get('PLAID_CLIENT_ID')
-    const secret = Deno.env.get('PLAID_SECRET_KEY')
+    // Initialize Supabase client to check user type
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    
+    // Check if user is a test user
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_test_user')
+      .eq('id', userId)
+      .single()
+    
+    const isTestUser = profile?.is_test_user || false
+    const environment = isTestUser ? 'Sandbox' : 'Production'
+    console.log(`🎯 User environment: ${environment}`)
+    
+    // Get appropriate Plaid credentials
+    const clientId = isTestUser
+      ? Deno.env.get('PLAID_SANDBOX_CLIENT_ID')
+      : Deno.env.get('PLAID_CLIENT_ID')
+    const secret = isTestUser
+      ? Deno.env.get('PLAID_SANDBOX_SECRET_KEY')
+      : Deno.env.get('PLAID_SECRET_KEY')
+    const apiBaseUrl = isTestUser
+      ? 'https://sandbox.plaid.com'
+      : 'https://production.plaid.com'
 
     if (!clientId || !secret) {
       console.error('❌ Missing Plaid credentials')
@@ -37,8 +57,8 @@ serve(async (req) => {
       )
     }
 
-    console.log('📡 Fetching accounts from Plaid Production API...')
-    const accountsResponse = await fetch('https://production.plaid.com/accounts/get', {
+    console.log(`📡 Fetching accounts from Plaid ${environment} API...`)
+    const accountsResponse = await fetch(`${apiBaseUrl}/accounts/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,12 +72,12 @@ serve(async (req) => {
 
     if (!accountsResponse.ok) {
       const errorText = await accountsResponse.text()
-      console.error('❌ Production Accounts API error:', accountsResponse.status, errorText)
-      throw new Error(`Production Accounts API error: ${accountsResponse.status}`)
+      console.error(`❌ ${environment} Accounts API error:`, accountsResponse.status, errorText)
+      throw new Error(`${environment} Accounts API error: ${accountsResponse.status}`)
     }
 
     const accountsData = await accountsResponse.json()
-    console.log('✅ Production accounts data received successfully:', {
+    console.log(`✅ ${environment} accounts data received successfully:`, {
       accountsCount: accountsData.accounts?.length || 0,
       accounts: accountsData.accounts?.map((acc: any) => ({
         id: acc.account_id,
@@ -69,12 +89,12 @@ serve(async (req) => {
     })
 
     // Fetch investment holdings for investment accounts
-    console.log('📡 Fetching investment holdings from Plaid Production API...')
+    console.log(`📡 Fetching investment holdings from Plaid ${environment} API...`)
     let investmentHoldings = []
     let investmentSecurities = []
     
     try {
-      const holdingsResponse = await fetch('https://production.plaid.com/investments/holdings/get', {
+      const holdingsResponse = await fetch(`${apiBaseUrl}/investments/holdings/get`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,16 +126,16 @@ serve(async (req) => {
     const endDate = new Date().toISOString().split('T')[0]
     const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-    console.log('📡 Starting production transaction fetch...', { 
+    console.log(`📡 Starting ${environment} transaction fetch...`, { 
       startDate, 
       endDate, 
       daysBack,
       maxTransactions
     })
 
-    // Fetch transactions using correct Production API parameters
-    console.log('📡 Fetching production transactions...')
-    const transactionsResponse = await fetch('https://production.plaid.com/transactions/get', {
+    // Fetch transactions
+    console.log(`📡 Fetching ${environment} transactions...`)
+    const transactionsResponse = await fetch(`${apiBaseUrl}/transactions/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -135,13 +155,13 @@ serve(async (req) => {
 
     if (!transactionsResponse.ok) {
       const errorText = await transactionsResponse.text()
-      console.error('❌ Production Transactions API error:', transactionsResponse.status, errorText)
+      console.error(`❌ ${environment} Transactions API error:`, transactionsResponse.status, errorText)
       
       // Try with a longer date range - maybe the account has older transactions
       console.log('⚠️ Trying with extended date range (730 days)...')
       const extendedStartDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       
-      const retryResponse = await fetch('https://production.plaid.com/transactions/get', {
+      const retryResponse = await fetch(`${apiBaseUrl}/transactions/get`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

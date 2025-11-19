@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,12 +16,35 @@ serve(async (req) => {
   try {
     console.log('🔄 exchange-plaid-token function called')
     
-    const { publicToken } = await req.json()
-    console.log('📊 Public token received:', publicToken.substring(0, 20) + '...')
+    const { publicToken, userId } = await req.json()
+    console.log('📊 Token exchange request received')
     
-    // Get Plaid credentials from environment
-    const clientId = Deno.env.get('PLAID_CLIENT_ID')
-    const secret = Deno.env.get('PLAID_SECRET_KEY')
+    // Initialize Supabase client to check user type
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    
+    // Check if user is a test user
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_test_user')
+      .eq('id', userId)
+      .single()
+    
+    const isTestUser = profile?.is_test_user || false
+    const environment = isTestUser ? 'Sandbox' : 'Production'
+    console.log(`🎯 User environment: ${environment}`)
+    
+    // Get appropriate Plaid credentials
+    const clientId = isTestUser
+      ? Deno.env.get('PLAID_SANDBOX_CLIENT_ID')
+      : Deno.env.get('PLAID_CLIENT_ID')
+    const secret = isTestUser
+      ? Deno.env.get('PLAID_SANDBOX_SECRET_KEY')
+      : Deno.env.get('PLAID_SECRET_KEY')
+    const apiUrl = isTestUser
+      ? 'https://sandbox.plaid.com/item/public_token/exchange'
+      : 'https://production.plaid.com/item/public_token/exchange'
 
     if (!clientId || !secret) {
       console.error('❌ Missing Plaid credentials')
@@ -40,8 +64,8 @@ serve(async (req) => {
       public_token: publicToken,
     }
 
-    console.log('🌐 Making request to Plaid Production API...')
-    const response = await fetch('https://production.plaid.com/item/public_token/exchange', {
+    console.log(`🌐 Making request to Plaid ${environment} API...`)
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,13 +73,13 @@ serve(async (req) => {
       body: JSON.stringify(request),
     })
 
-    console.log('📥 Production token exchange response status:', response.status)
+    console.log(`📥 ${environment} token exchange response status:`, response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('❌ Production token exchange error:', response.status, errorText)
+      console.error(`❌ ${environment} token exchange error:`, response.status, errorText)
       return new Response(
-        JSON.stringify({ error: `Production token exchange error: ${response.status}`, details: errorText }),
+        JSON.stringify({ error: `${environment} token exchange error: ${response.status}`, details: errorText }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: response.status,
@@ -64,10 +88,10 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    console.log('📊 Production token exchange response received:', data)
+    console.log(`📊 ${environment} token exchange response received`)
     
     if (data.error_code) {
-      console.error('❌ Production token exchange API error:', data.error_code, '-', data.error_message)
+      console.error(`❌ ${environment} token exchange API error:`, data.error_code, '-', data.error_message)
       return new Response(
         JSON.stringify({ error: `${data.error_code}: ${data.error_message}` }),
         {
@@ -77,7 +101,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Production access token received successfully')
+    console.log(`✅ ${environment} access token received successfully`)
     return new Response(
       JSON.stringify({ access_token: data.access_token }),
       {

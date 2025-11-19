@@ -1,5 +1,5 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,9 +18,32 @@ serve(async (req) => {
     const { userId } = await req.json()
     console.log('📊 User ID:', userId)
     
-    // Get Plaid credentials from environment
-    const clientId = Deno.env.get('PLAID_CLIENT_ID')
-    const secret = Deno.env.get('PLAID_SECRET_KEY')
+    // Initialize Supabase client to check user type
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    
+    // Check if user is a test user
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_test_user')
+      .eq('id', userId)
+      .single()
+    
+    const isTestUser = profile?.is_test_user || false
+    const environment = isTestUser ? 'Sandbox' : 'Production'
+    console.log(`🎯 User environment: ${environment}`)
+    
+    // Get appropriate Plaid credentials based on user type
+    const clientId = isTestUser 
+      ? Deno.env.get('PLAID_SANDBOX_CLIENT_ID')
+      : Deno.env.get('PLAID_CLIENT_ID')
+    const secret = isTestUser
+      ? Deno.env.get('PLAID_SANDBOX_SECRET_KEY')
+      : Deno.env.get('PLAID_SECRET_KEY')
+    const apiUrl = isTestUser
+      ? 'https://sandbox.plaid.com/link/token/create'
+      : 'https://production.plaid.com/link/token/create'
 
     console.log('🔍 Credential check:', {
       hasClientId: !!clientId,
@@ -53,8 +76,8 @@ serve(async (req) => {
       products: ['transactions', 'investments'],
     }
 
-    console.log('🌐 Making request to Plaid Production API...')
-    const response = await fetch('https://production.plaid.com/link/token/create', {
+    console.log(`🌐 Making request to Plaid ${environment} API...`)
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,11 +85,11 @@ serve(async (req) => {
       body: JSON.stringify(request),
     })
 
-    console.log('📥 Plaid Production API response status:', response.status)
+    console.log(`📥 Plaid ${environment} API response status:`, response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('❌ Plaid Production API error:', response.status, errorText)
+      console.error(`❌ Plaid ${environment} API error:`, response.status, errorText)
       
       // Parse error details for better reporting
       try {
@@ -89,7 +112,7 @@ serve(async (req) => {
       }
       
       return new Response(
-        JSON.stringify({ error: `Plaid Production API error: ${response.status}`, details: errorText }),
+        JSON.stringify({ error: `Plaid ${environment} API error: ${response.status}`, details: errorText }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: response.status,
@@ -98,10 +121,10 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    console.log('📊 Plaid Production API response received')
+    console.log(`📊 Plaid ${environment} API response received`)
     
     if (data.error_code) {
-      console.error('❌ Plaid Production API error:', data.error_code, '-', data.error_message)
+      console.error(`❌ Plaid ${environment} API error:`, data.error_code, '-', data.error_message)
       return new Response(
         JSON.stringify({ error: `${data.error_code}: ${data.error_message}` }),
         {
@@ -111,7 +134,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Production link token created successfully')
+    console.log(`✅ ${environment} link token created successfully`)
     return new Response(
       JSON.stringify({ link_token: data.link_token }),
       {

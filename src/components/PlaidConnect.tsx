@@ -72,10 +72,10 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
         onSuccess: async (public_token: string, metadata: any) => {
           console.log('✅ Plaid Link success');
           
-          try {
-            console.log('🔄 Exchanging public token for access token...');
-            const accessToken = await plaidService.exchangePublicToken(public_token);
-            console.log('✅ Access token received successfully');
+      try {
+        console.log('🔄 Exchanging public token for access token...');
+        const accessToken = await plaidService.exchangePublicToken(public_token, user?.id || '');
+        console.log('✅ Access token received successfully');
             
             if (onSuccess) {
               onSuccess(accessToken);
