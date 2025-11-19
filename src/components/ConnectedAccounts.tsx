@@ -39,17 +39,32 @@ const ConnectedAccounts = () => {
     await fetchPlaidData();
   };
 
-  const handleRemoveAccount = async (accountId: string) => {
+  const handleRemoveAccount = async (accountId: string, bankName: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove ${bankName}? This will also delete all associated transactions.`
+    );
+    
+    if (!confirmed) return;
+
     try {
+      console.log('🗑️ Removing account:', accountId);
       await deleteAccount(accountId);
       
       // Also clean up localStorage if no accounts remain
       const remainingAccounts = accounts.filter(a => a.id !== accountId);
       if (remainingAccounts.length === 0) {
+        console.log('🗑️ No accounts remain, cleaning up localStorage');
         localStorage.removeItem('plaid_access_token');
       }
+      
+      console.log('✅ Account removal completed');
     } catch (error) {
-      console.error('Error removing account:', error);
+      console.error('❌ Error removing account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove account. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -140,7 +155,7 @@ const ConnectedAccounts = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveAccount(account.id)}
+                    onClick={() => handleRemoveAccount(account.id, account.bank_name)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4" />
