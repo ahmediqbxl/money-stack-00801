@@ -4,6 +4,7 @@ import { plaidService } from '@/services/plaidService';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDatabase } from '@/hooks/useDatabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PlaidAccount {
   id: string;
@@ -30,6 +31,7 @@ export const usePlaidData = () => {
   const [hasFetched, setHasFetched] = useState(false);
   const [lastFetchMetadata, setLastFetchMetadata] = useState<any>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
   const { 
     accounts, 
     transactions, 
@@ -106,7 +108,7 @@ export const usePlaidData = () => {
     setIsLoading(true);
     
     try {
-      const data = await plaidService.getAccountsAndTransactions(tokenToUse, {
+      const data = await plaidService.getAccountsAndTransactions(tokenToUse, user?.id || '', {
         daysBack,
         maxTransactions
       });

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -87,11 +88,12 @@ const Auth = () => {
       const email = formData.get('email') as string;
       const password = formData.get('password') as string;
       const fullName = formData.get('fullName') as string;
+      const isTestUser = formData.get('isTestUser') === 'on';
 
       // Validate inputs
       const validatedData = signUpSchema.parse({ fullName, email, password });
 
-      const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName);
+      const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName, isTestUser);
 
       if (error) {
         toast({
@@ -255,6 +257,15 @@ const Auth = () => {
                         required
                         minLength={6}
                       />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="isTestUser" name="isTestUser" />
+                      <Label 
+                        htmlFor="isTestUser" 
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Sign up as test user (use Plaid Sandbox with fake test data)
+                      </Label>
                     </div>
                     <Button
                       type="submit"
