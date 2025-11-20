@@ -15,9 +15,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const ConnectedAccounts = () => {
   const [isRecentTransactionsOpen, setIsRecentTransactionsOpen] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<{ id: string; bankName: string; accountType: string; accountNumber: string; balance: number } | null>(null);
   const plaidConnectRef = useRef<PlaidConnectRef>(null);
   const { toast } = useToast();
   const { deleteAccount } = useDatabase();
@@ -39,23 +51,29 @@ const ConnectedAccounts = () => {
     await fetchPlaidData();
   };
 
-  const handleRemoveAccount = async (accountId: string, bankName: string) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to remove ${bankName}? This will also delete all associated transactions.`
-    );
-    
-    if (!confirmed) return;
+  const handleRemoveAccount = (accountId: string, bankName: string, accountType: string, accountNumber: string, balance: number) => {
+    setAccountToDelete({ id: accountId, bankName, accountType, accountNumber, balance });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!accountToDelete) return;
 
     try {
-      console.log('🗑️ Removing account:', accountId);
-      await deleteAccount(accountId);
+      console.log('🗑️ Removing account:', accountToDelete.id);
+      await deleteAccount(accountToDelete.id);
       
       // Also clean up localStorage if no accounts remain
-      const remainingAccounts = accounts.filter(a => a.id !== accountId);
+      const remainingAccounts = accounts.filter(a => a.id !== accountToDelete.id);
       if (remainingAccounts.length === 0) {
         console.log('🗑️ No accounts remain, cleaning up localStorage');
         localStorage.removeItem('plaid_access_token');
       }
+      
+      toast({
+        title: "Account Deleted",
+        description: `${accountToDelete.bankName} has been removed successfully.`,
+      });
       
       console.log('✅ Account removal completed');
     } catch (error) {
@@ -65,6 +83,9 @@ const ConnectedAccounts = () => {
         description: "Failed to remove account. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setAccountToDelete(null);
     }
   };
 
@@ -155,7 +176,7 @@ const ConnectedAccounts = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveAccount(account.id, account.bank_name)}
+                    onClick={() => handleRemoveAccount(account.id, account.bank_name, account.account_type, account.account_number, account.balance)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -266,6 +287,50 @@ const ConnectedAccounts = () => {
           </Card>
         </Collapsible>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this account? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {accountToDelete && (
+            <div className="my-4 p-4 bg-muted rounded-lg space-y-2">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="font-semibold">{accountToDelete.bankName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {accountToDelete.accountType} • {accountToDelete.accountNumber}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2 border-t">
+                <p className="text-sm text-muted-foreground">Current Balance</p>
+                <p className="text-xl font-bold text-green-600">
+                  ${accountToDelete.balance.toLocaleString()}
+                </p>
+              </div>
+              <p className="text-sm text-destructive pt-2">
+                All transactions associated with this account will also be deleted.
+              </p>
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
