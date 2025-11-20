@@ -113,10 +113,10 @@ class DatabaseService {
 
     console.log('🗑️ Starting account deletion process:', { accountId, userId: user.id });
     
-    // First, verify the account belongs to the current user
+    // First, get the account details including external_account_id
     const { data: accountCheck, error: checkError } = await supabase
       .from('accounts')
-      .select('id, user_id, bank_name')
+      .select('id, user_id, bank_name, external_account_id')
       .eq('id', accountId)
       .eq('user_id', user.id)
       .single();
@@ -128,8 +128,34 @@ class DatabaseService {
 
     console.log('✅ Account verified for deletion:', accountCheck);
 
+    // Add external_account_id to blacklist in user preferences
+    const { data: prefs } = await supabase
+      .from('user_preferences')
+      .select('preferences')
+      .eq('user_id', user.id)
+      .single();
+
+    const currentPrefs = (prefs?.preferences as Record<string, any>) || {};
+    const deletedAccountsList = (currentPrefs.deleted_account_ids as string[]) || [];
+    
+    if (!deletedAccountsList.includes(accountCheck.external_account_id)) {
+      deletedAccountsList.push(accountCheck.external_account_id);
+      
+      await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          preferences: {
+            ...currentPrefs,
+            deleted_account_ids: deletedAccountsList
+          }
+        });
+      
+      console.log('✅ Added account to deletion blacklist:', accountCheck.external_account_id);
+    }
+
     // Delete all transactions for this account (hard delete for cleanup)
-    const { error: transactionError, count: deletedTransactions } = await supabase
+    const { error: transactionError, count: deletedTransactionsCount } = await supabase
       .from('transactions')
       .delete()
       .eq('account_id', accountId)
@@ -140,10 +166,10 @@ class DatabaseService {
       throw transactionError;
     }
 
-    console.log('🗑️ Deleted transactions:', deletedTransactions);
+    console.log('🗑️ Deleted transactions:', deletedTransactionsCount);
 
     // Hard delete the account
-    const { error: accountError, count: deletedAccounts } = await supabase
+    const { error: accountError, count: deletedAccountsCount } = await supabase
       .from('accounts')
       .delete()
       .eq('id', accountId)
@@ -156,7 +182,7 @@ class DatabaseService {
 
     console.log('✅ Account deleted successfully:', { 
       accountId, 
-      deletedCount: deletedAccounts 
+      deletedCount: deletedAccountsCount 
     });
 
     // Verify the deletion worked by checking active accounts
