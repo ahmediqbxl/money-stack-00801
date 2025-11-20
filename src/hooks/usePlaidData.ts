@@ -108,6 +108,21 @@ export const usePlaidData = () => {
     setIsLoading(true);
     
     try {
+      // Fetch user's deleted account IDs from preferences
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      let deletedAccountIds: string[] = [];
+      
+      if (currentUser) {
+        const { data: prefs } = await supabase
+          .from('user_preferences')
+          .select('preferences')
+          .eq('user_id', currentUser.id)
+          .single();
+        
+        deletedAccountIds = ((prefs?.preferences as any)?.deleted_account_ids || []);
+        console.log('🚫 Loaded deleted account IDs blacklist:', deletedAccountIds);
+      }
+
       const data = await plaidService.getAccountsAndTransactions(tokenToUse, user?.id || '', {
         daysBack,
         maxTransactions
@@ -123,9 +138,24 @@ export const usePlaidData = () => {
       
       setLastFetchMetadata(data.metadata);
       
+      // Filter out deleted accounts before saving
+      const activeAccounts = data.accounts.filter(account => {
+        const isDeleted = deletedAccountIds.includes(account.account_id);
+        if (isDeleted) {
+          console.log('🚫 Skipping deleted account:', account.account_id, account.name);
+        }
+        return !isDeleted;
+      });
+      
+      console.log('📊 Filtered accounts:', {
+        total: data.accounts.length,
+        active: activeAccounts.length,
+        deleted: data.accounts.length - activeAccounts.length
+      });
+      
       // Save accounts to database with better duplicate checking
       console.log('💾 Starting to save accounts...');
-      const accountPromises = data.accounts.map(async (account, index) => {
+      const accountPromises = activeAccounts.map(async (account, index) => {
         console.log(`💾 Processing account ${index + 1}:`, {
           account_id: account.account_id,
           name: account.name,
