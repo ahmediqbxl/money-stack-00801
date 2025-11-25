@@ -40,6 +40,16 @@ class DatabaseService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Get blacklisted account IDs
+    const { data: prefs } = await supabase
+      .from('user_preferences')
+      .select('preferences')
+      .eq('user_id', user.id)
+      .single();
+    
+    const deletedAccountIds = ((prefs?.preferences as any)?.deleted_account_ids || []) as string[];
+    console.log('🚫 Blacklisted account IDs:', deletedAccountIds);
+
     const { data, error } = await supabase
       .from('accounts')
       .select('*')
@@ -52,13 +62,24 @@ class DatabaseService {
       throw error;
     }
 
+    // Filter out blacklisted accounts
+    const filteredAccounts = (data || []).filter(account => {
+      const isBlacklisted = deletedAccountIds.includes(account.external_account_id);
+      if (isBlacklisted) {
+        console.log('🚫 Filtering out blacklisted account from display:', account.external_account_id, account.bank_name);
+      }
+      return !isBlacklisted;
+    });
+
     console.log('📊 Fetched accounts from database:', {
-      count: data?.length || 0,
+      total: data?.length || 0,
+      filtered: filteredAccounts.length,
+      blacklisted: (data?.length || 0) - filteredAccounts.length,
       userId: user.id
     });
 
     // Type assertion to handle the provider field correctly
-    return (data || []).map(account => ({
+    return filteredAccounts.map(account => ({
       ...account,
       provider: account.provider as 'plaid' | 'flinks'
     }));
