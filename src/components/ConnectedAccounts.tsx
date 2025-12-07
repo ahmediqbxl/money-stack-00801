@@ -291,9 +291,9 @@ const ConnectedAccounts = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+            <AlertDialogTitle>Hide Account</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this account? This action cannot be undone.
+              Are you sure you want to hide this account? You can restore it later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           
@@ -314,8 +314,8 @@ const ConnectedAccounts = () => {
                   ${accountToDelete.balance.toLocaleString()}
                 </p>
               </div>
-              <p className="text-sm text-destructive pt-2">
-                All transactions associated with this account will also be deleted.
+              <p className="text-sm text-muted-foreground pt-2">
+                Transactions from this account will be hidden but not deleted.
               </p>
             </div>
           )}
@@ -326,7 +326,7 @@ const ConnectedAccounts = () => {
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Account
+              Hide Account
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

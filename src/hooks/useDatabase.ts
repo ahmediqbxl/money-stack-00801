@@ -136,38 +136,36 @@ export const useDatabase = () => {
 
   const deleteAccount = async (accountId: string) => {
     try {
-      console.log('🗑️ useDatabase: Starting account deletion for:', accountId);
+      console.log('🗑️ useDatabase: Starting soft delete for account:', accountId);
       
-      // Call the database service to delete the account and its transactions
+      // Call the database service to soft delete the account
       await databaseService.deleteAccount(accountId);
       
-      // Update local state by filtering out the deleted account and its transactions
+      // Update local state by filtering out the hidden account
       setAccounts(prev => {
         const filtered = prev.filter(a => a.id !== accountId);
         console.log('🔄 Updated accounts state:', filtered.length, 'accounts remaining');
         return filtered;
       });
       
+      // Filter out transactions for the hidden account from display
       setTransactions(prev => {
         const filtered = prev.filter(t => t.account_id !== accountId);
         console.log('🔄 Updated transactions state:', filtered.length, 'transactions remaining');
         return filtered;
       });
       
-      // Reload all data to ensure consistency with the database
-      await loadAllData();
-      
       toast({
-        title: "Account Removed",
-        description: "Bank account has been disconnected and all related data removed.",
+        title: "Account Hidden",
+        description: "Bank account has been hidden. You can restore it later if needed.",
       });
       
-      console.log('✅ Account deletion completed successfully');
+      console.log('✅ Account soft delete completed successfully');
     } catch (error) {
-      console.error('❌ Error deleting account:', error);
+      console.error('❌ Error hiding account:', error);
       toast({
         title: "Error",
-        description: "Failed to remove account.",
+        description: "Failed to hide account.",
         variant: "destructive",
       });
       throw error;

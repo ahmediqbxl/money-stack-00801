@@ -40,16 +40,7 @@ class DatabaseService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Get blacklisted account IDs
-    const { data: prefs } = await supabase
-      .from('user_preferences')
-      .select('preferences')
-      .eq('user_id', user.id)
-      .single();
-    
-    const deletedAccountIds = ((prefs?.preferences as any)?.deleted_account_ids || []) as string[];
-    console.log('🚫 Blacklisted account IDs:', deletedAccountIds);
-
+    // Only fetch active accounts
     const { data, error } = await supabase
       .from('accounts')
       .select('*')
@@ -62,24 +53,13 @@ class DatabaseService {
       throw error;
     }
 
-    // Filter out blacklisted accounts
-    const filteredAccounts = (data || []).filter(account => {
-      const isBlacklisted = deletedAccountIds.includes(account.external_account_id);
-      if (isBlacklisted) {
-        console.log('🚫 Filtering out blacklisted account from display:', account.external_account_id, account.bank_name);
-      }
-      return !isBlacklisted;
-    });
-
-    console.log('📊 Fetched accounts from database:', {
-      total: data?.length || 0,
-      filtered: filteredAccounts.length,
-      blacklisted: (data?.length || 0) - filteredAccounts.length,
+    console.log('📊 Fetched active accounts from database:', {
+      count: data?.length || 0,
       userId: user.id
     });
 
     // Type assertion to handle the provider field correctly
-    return filteredAccounts.map(account => ({
+    return (data || []).map(account => ({
       ...account,
       provider: account.provider as 'plaid' | 'flinks'
     }));
@@ -132,9 +112,9 @@ class DatabaseService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('🗑️ Starting account deletion process:', { accountId, userId: user.id });
+    console.log('🗑️ Starting soft delete for account:', { accountId, userId: user.id });
     
-    // First, get the account details including external_account_id
+    // Verify the account exists and belongs to the user
     const { data: accountCheck, error: checkError } = await supabase
       .from('accounts')
       .select('id, user_id, bank_name, external_account_id')
@@ -147,73 +127,36 @@ class DatabaseService {
       throw new Error('Account not found or access denied');
     }
 
-    console.log('✅ Account verified for deletion:', accountCheck);
+    console.log('✅ Account verified for soft delete:', accountCheck);
 
-    // Add external_account_id to blacklist in user preferences
-    const { data: prefs } = await supabase
-      .from('user_preferences')
-      .select('preferences')
-      .eq('user_id', user.id)
-      .single();
-
-    const currentPrefs = (prefs?.preferences as Record<string, any>) || {};
-    const deletedAccountsList = (currentPrefs.deleted_account_ids as string[]) || [];
-    
-    if (!deletedAccountsList.includes(accountCheck.external_account_id)) {
-      deletedAccountsList.push(accountCheck.external_account_id);
-      
-      await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          preferences: {
-            ...currentPrefs,
-            deleted_account_ids: deletedAccountsList
-          }
-        });
-      
-      console.log('✅ Added account to deletion blacklist:', accountCheck.external_account_id);
-    }
-
-    // Delete all transactions for this account (hard delete for cleanup)
-    const { error: transactionError, count: deletedTransactionsCount } = await supabase
-      .from('transactions')
-      .delete()
-      .eq('account_id', accountId)
-      .eq('user_id', user.id);
-
-    if (transactionError) {
-      console.error('❌ Error deleting account transactions:', transactionError);
-      throw transactionError;
-    }
-
-    console.log('🗑️ Deleted transactions:', deletedTransactionsCount);
-
-    // Hard delete the account
-    const { error: accountError, count: deletedAccountsCount } = await supabase
+    // Soft delete: Set is_active to false instead of deleting
+    const { error: updateError } = await supabase
       .from('accounts')
-      .delete()
+      .update({ 
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', accountId)
       .eq('user_id', user.id);
 
-    if (accountError) {
-      console.error('❌ Error deleting account:', accountError);
-      throw accountError;
+    if (updateError) {
+      console.error('❌ Error soft deleting account:', updateError);
+      throw updateError;
     }
 
-    console.log('✅ Account deleted successfully:', { 
+    console.log('✅ Account soft deleted (is_active = false):', { 
       accountId, 
-      deletedCount: deletedAccountsCount 
+      bankName: accountCheck.bank_name 
     });
 
-    // Verify the deletion worked by checking active accounts
+    // Verify the soft delete worked
     const { data: remainingAccounts } = await supabase
       .from('accounts')
       .select('id, bank_name')
       .eq('user_id', user.id)
       .eq('is_active', true);
 
-    console.log('📊 Remaining active accounts after deletion:', {
+    console.log('📊 Remaining active accounts after soft delete:', {
       count: remainingAccounts?.length || 0,
       accounts: remainingAccounts?.map(a => ({ id: a.id, name: a.bank_name }))
     });
