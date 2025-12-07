@@ -12,6 +12,7 @@ export interface DatabaseAccount {
   connected_at: string;
   last_synced_at: string;
   is_active: boolean;
+  updated_at?: string;
 }
 
 export interface DatabaseTransaction {
@@ -63,6 +64,57 @@ class DatabaseService {
       ...account,
       provider: account.provider as 'plaid' | 'flinks'
     }));
+  }
+
+  async getHiddenAccounts(): Promise<DatabaseAccount[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Fetch hidden (inactive) accounts
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_active', false)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching hidden accounts:', error);
+      throw error;
+    }
+
+    console.log('📊 Fetched hidden accounts from database:', {
+      count: data?.length || 0,
+      userId: user.id
+    });
+
+    return (data || []).map(account => ({
+      ...account,
+      provider: account.provider as 'plaid' | 'flinks'
+    }));
+  }
+
+  async restoreAccount(accountId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    console.log('🔄 Restoring account:', { accountId, userId: user.id });
+
+    const { error } = await supabase
+      .from('accounts')
+      .update({ 
+        is_active: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', accountId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('❌ Error restoring account:', error);
+      throw error;
+    }
+
+    console.log('✅ Account restored successfully:', accountId);
   }
 
   async saveAccount(account: Omit<DatabaseAccount, 'id'>): Promise<DatabaseAccount> {

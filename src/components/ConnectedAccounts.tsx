@@ -8,6 +8,7 @@ import PlaidConnect, { PlaidConnectRef } from './PlaidConnect';
 import { usePlaidData } from '@/hooks/usePlaidData';
 import { useDatabase } from '@/hooks/useDatabase';
 import TransactionNotes from './TransactionNotes';
+import HiddenAccounts from './HiddenAccounts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,7 @@ const ConnectedAccounts = () => {
   const [accountToDelete, setAccountToDelete] = useState<{ id: string; bankName: string; accountType: string; accountNumber: string; balance: number } | null>(null);
   const plaidConnectRef = useRef<PlaidConnectRef>(null);
   const { toast } = useToast();
-  const { deleteAccount } = useDatabase();
+  const { deleteAccount, loadAllData } = useDatabase();
   const {
     accounts,
     transactions,
@@ -287,6 +288,9 @@ const ConnectedAccounts = () => {
           </Card>
         </Collapsible>
       )}
+
+      {/* Hidden Accounts Management */}
+      <HiddenAccounts onAccountRestored={loadAllData} />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
