@@ -3,8 +3,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { plaidService } from '@/services/plaidService';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useDatabase } from '@/hooks/useDatabase';
+import { useEncryptedDatabase } from '@/hooks/useEncryptedDatabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { getStoredEncryptionPassword } from '@/lib/encryption';
 
 interface PlaidAccount {
   id: string;
@@ -33,13 +34,16 @@ export const usePlaidData = () => {
   const [requiresReauth, setRequiresReauth] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // Use encrypted database hook instead of regular database
   const { 
     accounts, 
     transactions, 
     saveAccount, 
     saveTransactions, 
-    updateTransactionCategory 
-  } = useDatabase();
+    updateTransactionCategory,
+    loadAllData,
+  } = useEncryptedDatabase();
 
   // Load stored Plaid access token from localStorage
   useEffect(() => {
@@ -49,49 +53,39 @@ export const usePlaidData = () => {
     }
   }, []);
 
-  // Auto-categorize transactions when they're loaded
+  // NOTE: AI auto-categorization is DISABLED with zero-knowledge encryption
+  // because the server cannot read the encrypted transaction descriptions
   const autoCategorizeTransactions = useCallback(async (transactionsToProcess: any[]) => {
-    if (transactionsToProcess.length === 0) return;
-
-    console.log('🤖 Auto-categorizing', transactionsToProcess.length, 'transactions');
+    // Zero-knowledge encryption means we CANNOT auto-categorize on the server
+    // The server only sees encrypted blobs, not the actual transaction data
+    console.log('⚠️ AI auto-categorization is disabled with zero-knowledge encryption');
+    console.log('📝 Users must manually categorize their transactions');
     
-    try {
-      const { data, error } = await supabase.functions.invoke('categorize-transactions', {
-        body: { transactions: transactionsToProcess }
+    // Show a one-time toast about this
+    if (transactionsToProcess.length > 0) {
+      toast({
+        title: "Manual Categorization Required",
+        description: "AI categorization is disabled for privacy. Your data is encrypted end-to-end.",
       });
-
-      if (error) throw error;
-
-      console.log('🤖 Auto-categorization response:', data);
-
-      // Update categories for uncategorized transactions
-      const updatePromises = data.categorizedTransactions.map((catTrans: any) => {
-        const originalTrans = transactionsToProcess.find(t => 
-          t.description === catTrans.description || 
-          (Math.abs(t.amount - Math.abs(catTrans.amount)) < 0.01 &&
-           t.description.toLowerCase().includes(catTrans.description.toLowerCase().split(' ')[0]))
-        );
-        
-        if (originalTrans && catTrans.category && !originalTrans.is_manual_category) {
-          console.log('🤖 Auto-updating category for:', originalTrans.description, 'to', catTrans.category);
-          return updateTransactionCategory(originalTrans.id, catTrans.category);
-        }
-      }).filter(Boolean);
-
-      if (updatePromises.length > 0) {
-        await Promise.all(updatePromises);
-        console.log('✅ Auto-categorized', updatePromises.length, 'transactions');
-      }
-    } catch (error) {
-      console.error('❌ Auto-categorization failed:', error);
-      // Don't show error toast for auto-categorization failures
     }
-  }, [updateTransactionCategory]);
+  }, [toast]);
 
   const fetchPlaidData = useCallback(async (
     accessToken?: string, 
     options: { daysBack?: number; maxTransactions?: number } = {}
   ) => {
+    // Check for encryption password first
+    const encPassword = getStoredEncryptionPassword();
+    if (!encPassword) {
+      console.error('❌ No encryption password found. Please sign in again.');
+      toast({
+        title: "Session Expired",
+        description: "Please sign in again to access your encrypted data.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Use provided token or stored token
     const tokenToUse = accessToken || plaidAccessToken || localStorage.getItem('plaid_access_token');
     
@@ -102,9 +96,10 @@ export const usePlaidData = () => {
     
     const { daysBack = 90, maxTransactions = 2000 } = options;
     
-    console.log('🚀 Starting enhanced Plaid data fetch:', {
+    console.log('🚀 Starting encrypted Plaid data fetch:', {
       daysBack,
-      maxTransactions
+      maxTransactions,
+      encryptionEnabled: true
     });
     setIsLoading(true);
     
@@ -254,16 +249,19 @@ export const usePlaidData = () => {
 
       setHasFetched(true);
       
+      // Reload decrypted data
+      await loadAllData();
+      
       const successMessage = data.metadata 
-        ? `Refreshed ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions from the last ${data.metadata.daysBack} days. Note: New transactions may take a few minutes to appear in Plaid.`
-        : `Refreshed ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions. Note: New transactions may take a few minutes to appear in Plaid.`;
+        ? `Refreshed ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions (encrypted).`
+        : `Refreshed ${savedAccounts.length} accounts and ${transformedTransactions.length} transactions (encrypted).`;
       
       toast({
-        title: "✓ Refresh Complete",
+        title: "✓ Encrypted Refresh Complete",
         description: successMessage,
       });
 
-      console.log('🎉 Enhanced Plaid data fetch and save completed successfully!');
+      console.log('🎉 Encrypted Plaid data fetch and save completed!');
     } catch (error: any) {
       console.error('💥 Error fetching enhanced Plaid data:', error);
       
@@ -291,7 +289,7 @@ export const usePlaidData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [plaidAccessToken, isLoading, saveAccount, saveTransactions, toast, autoCategorizeTransactions]);
+  }, [plaidAccessToken, isLoading, saveAccount, saveTransactions, toast, autoCategorizeTransactions, loadAllData]);
 
   const handlePlaidSuccess = async (accessToken: string) => {
     console.log('🎯 Plaid success, storing token and fetching data...');
