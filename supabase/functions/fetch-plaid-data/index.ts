@@ -73,6 +73,29 @@ serve(async (req) => {
     if (!accountsResponse.ok) {
       const errorText = await accountsResponse.text()
       console.error(`❌ ${environment} Accounts API error:`, accountsResponse.status, errorText)
+      
+      // Parse error to check for ITEM_LOGIN_REQUIRED
+      try {
+        const errorData = JSON.parse(errorText)
+        if (errorData.error_code === 'ITEM_LOGIN_REQUIRED') {
+          console.log('🔄 ITEM_LOGIN_REQUIRED - user needs to re-authenticate')
+          return new Response(
+            JSON.stringify({ 
+              error: 'ITEM_LOGIN_REQUIRED',
+              error_code: 'ITEM_LOGIN_REQUIRED',
+              message: 'Your bank connection needs to be re-authenticated. Please reconnect your bank account.',
+              requires_reauth: true
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400,
+            },
+          )
+        }
+      } catch (parseError) {
+        console.log('Could not parse error response:', parseError)
+      }
+      
       throw new Error(`${environment} Accounts API error: ${accountsResponse.status}`)
     }
 

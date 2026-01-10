@@ -15,8 +15,8 @@ serve(async (req) => {
   try {
     console.log('🔄 create-plaid-link-token function called')
     
-    const { userId } = await req.json()
-    console.log('📊 User ID:', userId)
+    const { userId, accessToken } = await req.json()
+    console.log('📊 User ID:', userId, 'Update mode:', !!accessToken)
     
     // Initialize Supabase client to check user type
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -63,8 +63,10 @@ serve(async (req) => {
       )
     }
 
-    console.log('🏗️ Building link token request...')
-    const request = {
+    console.log('🏗️ Building link token request...', { isUpdateMode: !!accessToken })
+    
+    // Build request - use access_token for update mode, products for new connection
+    const request: any = {
       client_id: clientId,
       secret: secret,
       client_name: 'MoneyStack',
@@ -73,7 +75,16 @@ serve(async (req) => {
       user: {
         client_user_id: userId,
       },
-      products: ['transactions', 'investments'],
+    }
+    
+    if (accessToken) {
+      // Update mode - use access_token instead of products
+      request.access_token = accessToken
+      console.log('🔄 Creating link token in UPDATE mode for re-authentication')
+    } else {
+      // New connection mode - use products
+      request.products = ['transactions', 'investments']
+      console.log('🆕 Creating link token for NEW connection')
     }
 
     console.log(`🌐 Making request to Plaid ${environment} API...`)

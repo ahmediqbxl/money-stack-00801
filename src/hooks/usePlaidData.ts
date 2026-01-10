@@ -30,6 +30,7 @@ export const usePlaidData = () => {
   const [plaidAccessToken, setPlaidAccessToken] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
   const [lastFetchMetadata, setLastFetchMetadata] = useState<any>(null);
+  const [requiresReauth, setRequiresReauth] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { 
@@ -263,13 +264,30 @@ export const usePlaidData = () => {
       });
 
       console.log('🎉 Enhanced Plaid data fetch and save completed successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Error fetching enhanced Plaid data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch account data from Plaid.",
-        variant: "destructive",
-      });
+      
+      // Check if the error indicates re-authentication is needed
+      const errorMessage = error?.message || '';
+      const errorData = error?.context?.data || error?.data || {};
+      
+      if (errorMessage.includes('ITEM_LOGIN_REQUIRED') || 
+          errorData.error_code === 'ITEM_LOGIN_REQUIRED' ||
+          errorData.requires_reauth) {
+        console.log('🔄 Re-authentication required - setting flag');
+        setRequiresReauth(true);
+        toast({
+          title: "Re-authentication Required",
+          description: "Your bank connection has expired. Please reconnect your bank account.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch account data from Plaid.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -280,10 +298,15 @@ export const usePlaidData = () => {
     localStorage.setItem('plaid_access_token', accessToken);
     setPlaidAccessToken(accessToken);
     setHasFetched(false); // Reset to allow fetching with new token
+    setRequiresReauth(false); // Clear reauth flag after successful connection
     
     // Immediately fetch data with the new token and enhanced options
     console.log('🚀 Triggering immediate enhanced data fetch...');
     await fetchPlaidData(accessToken, { daysBack: 90, maxTransactions: 2000 });
+  };
+  
+  const clearReauthFlag = () => {
+    setRequiresReauth(false);
   };
 
   // Auto-fetch data on login if we have a token
@@ -302,5 +325,7 @@ export const usePlaidData = () => {
     handlePlaidSuccess,
     lastFetchMetadata,
     plaidAccessToken,
+    requiresReauth,
+    clearReauthFlag,
   };
 };
