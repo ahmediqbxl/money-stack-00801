@@ -18,6 +18,7 @@ import { usePlaidData } from "@/hooks/usePlaidData";
 import AIInsights from "@/components/AIInsights";
 import CategoryTransactions from "@/components/CategoryTransactions";
 import SavingsGoal from "@/components/SavingsGoal";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -619,6 +620,7 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };
