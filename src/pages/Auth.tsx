@@ -8,9 +8,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, TrendingUp, Shield, Users } from 'lucide-react';
+import { storeEncryptionPassword } from '@/lib/encryption';
+import { DollarSign, TrendingUp, Shield, Users, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
 
+// IMPORTANT: Zero-knowledge encryption warning
+const ENCRYPTION_WARNING = "Your password is used to encrypt your financial data. If you forget your password, your data CANNOT be recovered.";
 const signInSchema = z.object({
   email: z.string().trim().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters')
@@ -60,6 +63,9 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
+        // Store password for encryption (session storage - cleared on browser close)
+        storeEncryptionPassword(validatedData.password);
+        
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
@@ -102,9 +108,12 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
+        // Store password for encryption (session storage - cleared on browser close)
+        storeEncryptionPassword(validatedData.password);
+        
         toast({
           title: "Account Created!",
-          description: "Welcome to MoneyStack! You can now start connecting your accounts.",
+          description: "Welcome to MoneyStack! Your data will be encrypted with your password.",
         });
         navigate('/');
       }
@@ -161,8 +170,8 @@ const Auth = () => {
                 <Shield className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Bank-Level Security</h3>
-                <p className="text-sm text-gray-600">Your data is protected</p>
+                <h3 className="font-semibold text-gray-900">Zero-Knowledge Encryption</h3>
+                <p className="text-sm text-gray-600">Only you can see your data</p>
               </div>
             </div>
 
@@ -267,6 +276,17 @@ const Auth = () => {
                         Sign up as test user (use Plaid Sandbox with fake test data)
                       </Label>
                     </div>
+                    
+                    {/* Zero-knowledge encryption warning */}
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-amber-800">
+                          <strong>Important:</strong> {ENCRYPTION_WARNING}
+                        </p>
+                      </div>
+                    </div>
+                    
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
