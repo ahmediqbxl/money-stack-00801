@@ -8,6 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 
 interface PlaidConnectProps {
   onSuccess?: (accessToken: string) => void;
+  requiresReauth?: boolean;
+  existingAccessToken?: string | null;
+  onReauthComplete?: () => void;
 }
 
 declare global {
@@ -25,12 +28,18 @@ export interface PlaidConnectRef {
   connect: () => void;
 }
 
-const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onSuccess }, ref) => {
+const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ 
+  onSuccess, 
+  requiresReauth = false, 
+  existingAccessToken,
+  onReauthComplete 
+}, ref) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isPlaidLoaded, setIsPlaidLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingToken, setIsCreatingToken] = useState(false);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -72,18 +81,24 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
         onSuccess: async (public_token: string, metadata: any) => {
           console.log('✅ Plaid Link success');
           
-      try {
-        console.log('🔄 Exchanging public token for access token...');
-        const accessToken = await plaidService.exchangePublicToken(public_token, user?.id || '');
-        console.log('✅ Access token received successfully');
+          try {
+            console.log('🔄 Exchanging public token for access token...');
+            const accessToken = await plaidService.exchangePublicToken(public_token, user?.id || '');
+            console.log('✅ Access token received successfully');
             
             if (onSuccess) {
               onSuccess(accessToken);
             }
             
+            if (isUpdateMode && onReauthComplete) {
+              onReauthComplete();
+            }
+            
             toast({
               title: "Success!",
-              description: "Bank account connected successfully via Plaid Production.",
+              description: isUpdateMode 
+                ? "Bank account re-authenticated successfully." 
+                : "Bank account connected successfully via Plaid Production.",
             });
           } catch (error) {
             console.error('💥 Error exchanging token:', error);
@@ -131,16 +146,24 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
     await createLinkToken();
   };
 
-  // Create link token on component mount
-  const createLinkToken = async () => {
+  // Create link token on component mount or when reauth is required
+  const createLinkToken = async (forceUpdateMode = false) => {
     if (user && !isCreatingToken) {
       setIsCreatingToken(true);
+      const useUpdateMode = forceUpdateMode || (requiresReauth && !!existingAccessToken);
+      setIsUpdateMode(useUpdateMode);
+      
       try {
-        console.log('🔄 Creating production link token for user:', user.id);
+        console.log('🔄 Creating link token for user:', user.id, 'update mode:', useUpdateMode);
         setError(null);
-        const token = await plaidService.createLinkToken(user.id);
+        
+        // Pass accessToken for update mode
+        const token = await plaidService.createLinkToken(
+          user.id, 
+          useUpdateMode ? existingAccessToken || undefined : undefined
+        );
         setLinkToken(token);
-        console.log('✅ Link token created successfully');
+        console.log('✅ Link token created successfully (update mode:', useUpdateMode, ')');
       } catch (error) {
         console.error('💥 Error creating link token:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -159,20 +182,46 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
   useEffect(() => {
     createLinkToken();
   }, [user]);
+  
+  // Re-create link token in update mode when reauth is required
+  useEffect(() => {
+    if (requiresReauth && existingAccessToken && user && !isCreatingToken) {
+      console.log('🔄 Re-creating link token for update mode due to reauth requirement');
+      createLinkToken(true);
+    }
+  }, [requiresReauth, existingAccessToken, user]);
 
   const canConnect = linkToken && isPlaidLoaded && !error && !isCreatingToken;
   const isCredentialError = error && error.includes('Invalid Plaid credentials');
 
+  // Show reauth warning if needed
+  const showReauthWarning = requiresReauth && !isConnecting;
+
   return (
     <>
-      <Card className="border-dashed border-2 border-gray-300 hover:border-blue-400 transition-colors">
+      <Card className={`border-dashed border-2 transition-colors ${
+        showReauthWarning 
+          ? 'border-orange-400 bg-orange-50' 
+          : 'border-gray-300 hover:border-blue-400'
+      }`}>
         <CardHeader className="text-center">
-          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-6 h-6 text-blue-600" />
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4 ${
+            showReauthWarning ? 'bg-orange-100' : 'bg-blue-100'
+          }`}>
+            {showReauthWarning ? (
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            ) : (
+              <Building2 className="w-6 h-6 text-blue-600" />
+            )}
           </div>
-          <CardTitle>Connect Your Bank Account</CardTitle>
+          <CardTitle>
+            {showReauthWarning ? 'Re-authenticate Bank Account' : 'Connect Your Bank Account'}
+          </CardTitle>
           <CardDescription>
-            Securely connect your bank account using Plaid to automatically import transactions and get personalized insights.
+            {showReauthWarning 
+              ? 'Your bank connection has expired. Please reconnect to continue syncing your transactions.'
+              : 'Securely connect your bank account using Plaid to automatically import transactions and get personalized insights.'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
@@ -210,9 +259,19 @@ const PlaidConnect = React.forwardRef<PlaidConnectRef, PlaidConnectProps>(({ onS
           <Button 
             onClick={handleConnectBank}
             disabled={isConnecting || !canConnect || isCreatingToken}
-            className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+            className={`w-full ${
+              showReauthWarning
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
+                : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
+            }`}
           >
-            {isConnecting ? 'Connecting...' : isCreatingToken ? 'Initializing...' : 'Connect Bank Account'}
+            {isConnecting 
+              ? 'Connecting...' 
+              : isCreatingToken 
+                ? 'Initializing...' 
+                : showReauthWarning 
+                  ? 'Reconnect Bank Account' 
+                  : 'Connect Bank Account'}
           </Button>
           
           <p className="text-sm text-gray-500 mt-2">

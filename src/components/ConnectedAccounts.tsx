@@ -42,6 +42,8 @@ const ConnectedAccounts = () => {
     handlePlaidSuccess,
     lastFetchMetadata,
     plaidAccessToken,
+    requiresReauth,
+    clearReauthFlag,
   } = usePlaidData();
 
   const handleRefreshAccounts = async () => {
@@ -108,10 +110,23 @@ const ConnectedAccounts = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hidden PlaidConnect component */}
-      <div style={{ display: 'none' }}>
-        <PlaidConnect ref={plaidConnectRef} onSuccess={handleConnectSuccess} />
+      {/* Hidden PlaidConnect component - also handles reauth */}
+      <div style={{ display: requiresReauth ? 'block' : 'none' }}>
+        <PlaidConnect 
+          ref={plaidConnectRef} 
+          onSuccess={handleConnectSuccess}
+          requiresReauth={requiresReauth}
+          existingAccessToken={plaidAccessToken}
+          onReauthComplete={clearReauthFlag}
+        />
       </div>
+      
+      {/* Hidden trigger for add account */}
+      {!requiresReauth && (
+        <div style={{ display: 'none' }}>
+          <PlaidConnect ref={plaidConnectRef} onSuccess={handleConnectSuccess} />
+        </div>
+      )}
       
       <div className="flex items-center justify-between">
         <div>

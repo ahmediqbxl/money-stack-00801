@@ -51,14 +51,14 @@ class PlaidService {
     console.log('🏗️ PlaidService constructor called - using production Plaid API via edge functions');
   }
 
-  async createLinkToken(userId: string): Promise<string> {
-    console.log('🚀 createLinkToken called for user:', userId);
+  async createLinkToken(userId: string, accessToken?: string): Promise<string> {
+    console.log('🚀 createLinkToken called for user:', userId, 'update mode:', !!accessToken);
     
     try {
       console.log('📡 Calling create-plaid-link-token edge function...');
       
       const { data, error } = await supabase.functions.invoke('create-plaid-link-token', {
-        body: { userId }
+        body: { userId, accessToken }
       });
       
       console.log('📊 Edge function response received');
