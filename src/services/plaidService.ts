@@ -148,11 +148,22 @@ class PlaidService {
         hasMetadata: !!data?.metadata,
         accountsCount: data?.accounts?.length || 0,
         transactionsCount: data?.transactions?.length || 0,
-        metadata: data?.metadata
+        metadata: data?.metadata,
+        requiresReauth: data?.requires_reauth,
+        errorCode: data?.error_code
       });
       console.log('  - Sample account:', data?.accounts?.[0]);
       console.log('  - Sample transaction:', data?.transactions?.[0]);
       console.log('  - Error:', error);
+      
+      // Check if response indicates re-authentication is needed (can be in data even with error)
+      if (data?.requires_reauth || data?.error_code === 'ITEM_LOGIN_REQUIRED') {
+        console.log('🔄 Re-authentication required - detected from response data');
+        const reauthError = new Error('ITEM_LOGIN_REQUIRED: Bank connection needs re-authentication');
+        (reauthError as any).requires_reauth = true;
+        (reauthError as any).error_code = 'ITEM_LOGIN_REQUIRED';
+        throw reauthError;
+      }
       
       if (error) {
         console.error('❌ Production fetch data edge function error:', error);
