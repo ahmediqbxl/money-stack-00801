@@ -267,11 +267,12 @@ export const usePlaidData = () => {
       
       // Check if the error indicates re-authentication is needed
       const errorMessage = error?.message || '';
-      const errorData = error?.context?.data || error?.data || {};
+      const requiresReauthFlag = error?.requires_reauth;
+      const errorCode = error?.error_code;
       
       if (errorMessage.includes('ITEM_LOGIN_REQUIRED') || 
-          errorData.error_code === 'ITEM_LOGIN_REQUIRED' ||
-          errorData.requires_reauth) {
+          requiresReauthFlag === true ||
+          errorCode === 'ITEM_LOGIN_REQUIRED') {
         console.log('🔄 Re-authentication required - setting flag');
         setRequiresReauth(true);
         toast({
