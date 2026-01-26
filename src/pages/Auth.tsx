@@ -113,7 +113,7 @@ const Auth = () => {
         
         toast({
           title: "Account Created!",
-          description: "Welcome to MoneyStack! Your data will be encrypted with your password.",
+          description: "Welcome to NetWorth! Your data will be encrypted with your password.",
         });
         navigate('/');
       }
@@ -131,16 +131,16 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Marketing content */}
         <div className="space-y-8">
           <div className="text-center lg:text-left">
-            <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-4">
-              MoneyStack
+            <h1 className="text-4xl lg:text-6xl font-display font-black tracking-tight mb-4">
+              NETWORTH
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Connect your accounts and let AI analyze your spending to find personalized savings opportunities
+            <p className="text-xl text-muted-foreground mb-8">
+              Track your assets and liabilities. Know your net worth. Reach your goals.
             </p>
           </div>
 

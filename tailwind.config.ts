@@ -18,6 +18,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,12 +65,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Net worth specific
+				asset: {
+					DEFAULT: 'hsl(var(--asset))',
+					foreground: 'hsl(var(--asset-foreground))'
+				},
+				liability: {
+					DEFAULT: 'hsl(var(--liability))',
+					foreground: 'hsl(var(--liability-foreground))'
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				'brutalist': 'var(--brutalist-shadow)',
+				'brutalist-lg': 'var(--brutalist-shadow-lg)',
 			},
 			keyframes: {
 				'accordion-down': {

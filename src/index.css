@@ -4,89 +4,110 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Neo-Brutalist Theme - Bold & Raw */
+    --background: 60 9% 98%;
+    --foreground: 0 0% 5%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 60 9% 98%;
+    --card-foreground: 0 0% 5%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 60 9% 98%;
+    --popover-foreground: 0 0% 5%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Bold primary colors */
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 47 96% 53%;
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 60 5% 90%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Thick black borders - signature brutalist */
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 262 83% 58%;
 
-    --radius: 0.5rem;
+    --radius: 0;
 
-    --sidebar-background: 0 0% 98%;
+    /* Custom brutalist tokens */
+    --brutalist-shadow: 4px 4px 0px 0px hsl(0 0% 0%);
+    --brutalist-shadow-lg: 8px 8px 0px 0px hsl(0 0% 0%);
+    --brutalist-border: 3px solid hsl(0 0% 0%);
+    --brutalist-border-thick: 4px solid hsl(0 0% 0%);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Semantic colors */
+    --asset: 142 76% 36%;
+    --asset-foreground: 0 0% 100%;
+    --liability: 0 84% 60%;
+    --liability-foreground: 0 0% 100%;
+    --net-positive: 142 76% 36%;
+    --net-negative: 0 84% 60%;
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 60 9% 95%;
+    --sidebar-foreground: 0 0% 5%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 47 96% 53%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 262 83% 58%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 5%;
+    --foreground: 60 9% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 10%;
+    --card-foreground: 60 9% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 60 9% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 262 83% 65%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 47 96% 53%;
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 60 5% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 142 76% 50%;
+    --accent-foreground: 0 0% 5%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 60 9% 98%;
+    --input: 60 9% 98%;
+    --ring: 262 83% 65%;
+
+    --brutalist-shadow: 4px 4px 0px 0px hsl(60 9% 98%);
+    --brutalist-shadow-lg: 8px 8px 0px 0px hsl(60 9% 98%);
+    --brutalist-border: 3px solid hsl(60 9% 98%);
+    --brutalist-border-thick: 4px solid hsl(60 9% 98%);
+
+    --asset: 142 76% 50%;
+    --asset-foreground: 0 0% 5%;
+    --liability: 0 84% 60%;
+    --liability-foreground: 0 0% 100%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 60 9% 98%;
+    --sidebar-primary: 262 83% 65%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 47 96% 53%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 60 9% 98%;
+    --sidebar-ring: 262 83% 65%;
   }
 }
 
@@ -97,5 +118,62 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  /* Neo-brutalist typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* Brutalist card style */
+  .brutalist-card {
+    @apply bg-card border-[3px] border-foreground;
+    box-shadow: var(--brutalist-shadow);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  .brutalist-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px hsl(var(--foreground));
+  }
+
+  /* Brutalist button style */
+  .brutalist-button {
+    @apply font-bold uppercase tracking-wider border-[3px] border-foreground;
+    box-shadow: var(--brutalist-shadow);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  .brutalist-button:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px hsl(var(--foreground));
+  }
+
+  .brutalist-button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px 0px hsl(var(--foreground));
+  }
+
+  /* Asset/Liability badges */
+  .badge-asset {
+    @apply bg-accent text-accent-foreground font-bold uppercase text-xs px-3 py-1 border-2 border-foreground;
+  }
+
+  .badge-liability {
+    @apply bg-destructive text-destructive-foreground font-bold uppercase text-xs px-3 py-1 border-2 border-foreground;
+  }
+
+  /* Net worth display */
+  .net-worth-positive {
+    @apply text-accent;
+  }
+
+  .net-worth-negative {
+    @apply text-destructive;
   }
 }
