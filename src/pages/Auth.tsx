@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { storeEncryptionPassword } from '@/lib/encryption';
-import { DollarSign, TrendingUp, Shield, Users, AlertTriangle } from 'lucide-react';
+import { DollarSign, TrendingUp, Shield, Users, AlertTriangle, Chrome } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
 // IMPORTANT: Zero-knowledge encryption warning
@@ -31,9 +32,37 @@ const signUpSchema = z.object({
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { signIn, signUp, user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) {
+        toast({
+          title: "Google Sign In Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -231,6 +260,28 @@ const Auth = () => {
                     >
                       {isLoading ? "Signing In..." : "Sign In"}
                     </Button>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          Or continue with
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleGoogleSignIn}
+                      disabled={isGoogleLoading}
+                    >
+                      <Chrome className="mr-2 h-4 w-4" />
+                      {isGoogleLoading ? "Connecting..." : "Google"}
+                    </Button>
                   </form>
                 </TabsContent>
 
@@ -293,6 +344,28 @@ const Auth = () => {
                       disabled={isLoading}
                     >
                       {isLoading ? "Creating Account..." : "Create Account"}
+                    </Button>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          Or continue with
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleGoogleSignIn}
+                      disabled={isGoogleLoading}
+                    >
+                      <Chrome className="mr-2 h-4 w-4" />
+                      {isGoogleLoading ? "Connecting..." : "Google"}
                     </Button>
                   </form>
                 </TabsContent>
