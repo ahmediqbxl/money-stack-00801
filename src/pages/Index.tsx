@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Shield, RefreshCw, Plus, Wallet } from 'lucide-react';
+import { LogOut, User, Shield, RefreshCw, Plus, Wallet, Crown, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { supabase } from '@/integrations/supabase/client';
 import PlaidConnect, { PlaidConnectRef } from '@/components/PlaidConnect';
 import { usePlaidData } from '@/hooks/usePlaidData';
@@ -12,11 +13,16 @@ import AccountsList from '@/components/AccountsList';
 import NetWorthChart from '@/components/NetWorthChart';
 import GoalsSection from '@/components/GoalsSection';
 import Footer from '@/components/Footer';
+import SubscriptionLanding from '@/components/SubscriptionLanding';
+import UpgradePrompt from '@/components/UpgradePrompt';
 
 const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
+  const [hasSeenLanding, setHasSeenLanding] = useState(false);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
+  const { isSubscribed, isLoading: subscriptionLoading, tier, openCustomerPortal } = useSubscription();
   const navigate = useNavigate();
   const plaidConnectRef = useRef<PlaidConnectRef>(null);
   
@@ -47,6 +53,23 @@ const Index = () => {
     checkAdminStatus();
   }, [user]);
 
+  // Check if user has seen landing before (has accounts or is subscribed)
+  useEffect(() => {
+    if (subscriptionLoading) return;
+    
+    if (isSubscribed || accounts.length > 0) {
+      setShowLanding(false);
+      setHasSeenLanding(true);
+    } else if (!hasSeenLanding) {
+      setShowLanding(true);
+    }
+  }, [isSubscribed, accounts.length, subscriptionLoading, hasSeenLanding]);
+
+  const handleContinueFree = () => {
+    setShowLanding(false);
+    setHasSeenLanding(true);
+  };
+
   const handleSignOut = async () => {
     await signOut();
     toast({
@@ -56,6 +79,14 @@ const Index = () => {
   };
 
   const handleRefresh = async () => {
+    if (!isSubscribed) {
+      toast({
+        title: "Pro Feature",
+        description: "Upgrade to Pro to sync your bank accounts automatically.",
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Refreshing...",
       description: "Fetching latest account balances",
@@ -64,6 +95,14 @@ const Index = () => {
   };
 
   const handleAddAccount = () => {
+    if (!isSubscribed) {
+      toast({
+        title: "Pro Feature",
+        description: "Upgrade to Pro to link your bank accounts.",
+        variant: "destructive",
+      });
+      return;
+    }
     plaidConnectRef.current?.connect();
   };
 
@@ -74,6 +113,35 @@ const Index = () => {
       description: "Your bank account has been successfully connected!",
     });
   };
+
+  const handleManageSubscription = async () => {
+    try {
+      await openCustomerPortal();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not open subscription management. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Show loading state
+  if (subscriptionLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show subscription landing for new free users
+  if (showLanding && !isSubscribed) {
+    return <SubscriptionLanding onContinueFree={handleContinueFree} />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,6 +166,29 @@ const Index = () => {
 
             {/* User Actions */}
             <div className="flex items-center gap-4">
+              {/* Subscription Badge */}
+              {isSubscribed ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManageSubscription}
+                  className="brutalist-button bg-primary/10 border-primary"
+                >
+                  <Crown className="w-4 h-4 mr-2 text-primary" />
+                  Pro
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLanding(true)}
+                  className="brutalist-button"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade
+                </Button>
+              )}
+
               <div className="hidden md:flex items-center gap-2 text-sm">
                 <User className="w-4 h-4" />
                 <span className="font-medium">{user?.email}</span>
@@ -129,20 +220,24 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hidden Plaid Connect */}
-      <div style={{ display: requiresReauth ? 'block' : 'none' }}>
-        <PlaidConnect 
-          ref={plaidConnectRef} 
-          onSuccess={handleConnectSuccess}
-          requiresReauth={requiresReauth}
-          existingAccessToken={plaidAccessToken}
-          onReauthComplete={clearReauthFlag}
-        />
-      </div>
-      {!requiresReauth && (
-        <div style={{ display: 'none' }}>
-          <PlaidConnect ref={plaidConnectRef} onSuccess={handleConnectSuccess} />
-        </div>
+      {/* Hidden Plaid Connect - Only for Pro users */}
+      {isSubscribed && (
+        <>
+          <div style={{ display: requiresReauth ? 'block' : 'none' }}>
+            <PlaidConnect 
+              ref={plaidConnectRef} 
+              onSuccess={handleConnectSuccess}
+              requiresReauth={requiresReauth}
+              existingAccessToken={plaidAccessToken}
+              onReauthComplete={clearReauthFlag}
+            />
+          </div>
+          {!requiresReauth && (
+            <div style={{ display: 'none' }}>
+              <PlaidConnect ref={plaidConnectRef} onSuccess={handleConnectSuccess} />
+            </div>
+          )}
+        </>
       )}
 
       {/* Main Content */}
@@ -152,24 +247,35 @@ const Index = () => {
 
         {/* Action Bar */}
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Button 
-            onClick={handleAddAccount}
-            className="brutalist-button bg-primary text-primary-foreground"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Link Bank Account
-          </Button>
-          
-          {accounts.length > 0 && (
-            <Button 
-              onClick={handleRefresh}
-              variant="outline"
-              disabled={isLoading}
-              className="brutalist-button"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh Balances
-            </Button>
+          {isSubscribed ? (
+            <>
+              <Button 
+                onClick={handleAddAccount}
+                className="brutalist-button bg-primary text-primary-foreground"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Link Bank Account
+              </Button>
+              
+              {accounts.length > 0 && (
+                <Button 
+                  onClick={handleRefresh}
+                  variant="outline"
+                  disabled={isLoading}
+                  className="brutalist-button"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh Balances
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="text-center">
+              <UpgradePrompt 
+                feature="Automated Bank Sync" 
+                description="Link your bank accounts and sync balances automatically with Plaid"
+              />
+            </div>
           )}
         </div>
 
