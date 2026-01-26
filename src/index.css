@@ -142,12 +142,19 @@
     box-shadow: 6px 6px 0px 0px hsl(var(--foreground));
   }
 
-  /* Disable hover transform on dialogs/modals to prevent movement while interacting */
-  [role="dialog"] .brutalist-card,
-  [role="dialog"].brutalist-card {
+  /* Disable ALL hover transforms inside dialogs/modals to prevent movement while interacting */
+  [role="dialog"] *,
+  [data-radix-popper-content-wrapper] * {
     &:hover {
-      transform: none;
+      transform: none !important;
     }
+  }
+  
+  [role="dialog"] .brutalist-card,
+  [role="dialog"] .brutalist-button,
+  [data-radix-popper-content-wrapper] .brutalist-card,
+  [data-radix-popper-content-wrapper] .brutalist-button {
+    box-shadow: var(--brutalist-shadow) !important;
   }
 
   /* Brutalist button style */
