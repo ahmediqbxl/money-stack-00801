@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,22 +60,27 @@ const AddManualAccountDialog = ({
 
     setIsSubmitting(true);
     
-    await addManualAccount({
-      name: name.trim(),
-      account_type: accountType,
-      classification,
-      balance: parseFloat(balance) || 0,
-      currency: 'USD',
-      notes: notes.trim() || undefined,
-    });
+    try {
+      const success = await addManualAccount({
+        name: name.trim(),
+        account_type: accountType,
+        classification,
+        balance: parseFloat(balance) || 0,
+        currency: 'USD',
+        notes: notes.trim() || undefined,
+      });
 
-    // Reset form
-    setName('');
-    setAccountType('');
-    setBalance('');
-    setNotes('');
-    setIsSubmitting(false);
-    onOpenChange(false);
+      if (success) {
+        // Reset form only on success
+        setName('');
+        setAccountType('');
+        setBalance('');
+        setNotes('');
+        onOpenChange(false);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClassificationChange = (value: AccountClassification) => {
@@ -90,6 +95,9 @@ const AddManualAccountDialog = ({
           <DialogTitle className="font-display text-2xl font-black">
             Add {classification === 'asset' ? 'Asset' : 'Liability'}
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Track a new {classification === 'asset' ? 'asset' : 'liability'} that isn't linked to a bank.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
