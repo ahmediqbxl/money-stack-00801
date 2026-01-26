@@ -34,6 +34,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Handle pending test user from Google OAuth
+        if (event === 'SIGNED_IN' && session?.user) {
+          const pendingTestUser = localStorage.getItem('pendingTestUser');
+          if (pendingTestUser === 'true') {
+            localStorage.removeItem('pendingTestUser');
+            // Update profile with test user status using setTimeout to avoid deadlock
+            setTimeout(async () => {
+              await supabase
+                .from('profiles')
+                .update({ is_test_user: true })
+                .eq('id', session.user.id);
+            }, 0);
+          }
+        }
       }
     );
 
