@@ -12,8 +12,8 @@ import { Wallet, TrendingUp, Shield, PiggyBank, AlertTriangle, Mail } from 'luci
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
-// IMPORTANT: Zero-knowledge encryption warning
-const ENCRYPTION_WARNING = "Your password is used to encrypt your financial data. If you forget your password, your data CANNOT be recovered.";
+// Zero-knowledge encryption notice
+const ENCRYPTION_NOTICE = "Your password encrypts your financial data. You can reset your password anytime, but previously encrypted data will be lost.";
 
 const signInSchema = z.object({
   email: z.string().trim().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
@@ -418,11 +418,11 @@ const Auth = () => {
                         </Label>
                       </div>
                       
-                      <div className="p-3 bg-amber-50 border-2 border-amber-300">
+                      <div className="p-3 bg-muted border-2 border-border rounded-md">
                         <div className="flex items-start space-x-2">
-                          <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-amber-800">
-                            <strong>Important:</strong> {ENCRYPTION_WARNING}
+                          <Shield className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            {ENCRYPTION_NOTICE}
                           </p>
                         </div>
                       </div>
