@@ -3,6 +3,16 @@ import { Building2, Home, Car, Plus, Pencil, Trash2, ChevronDown, ChevronUp } fr
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNetWorth, AccountClassification, getAutoClassification } from '@/hooks/useNetWorth';
 import AddManualAccountDialog from './AddManualAccountDialog';
 
@@ -58,20 +68,18 @@ const AccountItem = ({ name, balance, type, source, classification, onEdit, onDe
           ${balance.toLocaleString()}
         </span>
         
-        {source === 'manual' && (
-          <div className="flex gap-1">
-            {onEdit && (
-              <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
-                <Pencil className="w-4 h-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-destructive">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex gap-1">
+          {source === 'manual' && onEdit && (
+            <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
+              <Pencil className="w-4 h-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -82,8 +90,10 @@ const AccountsList = () => {
   const [liabilitiesOpen, setLiabilitiesOpen] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [defaultClassification, setDefaultClassification] = useState<AccountClassification>('asset');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<{ id: string; name: string; source: 'plaid' | 'manual' } | null>(null);
   
-  const { accountsByClassification, deleteManualAccount, manualAccounts } = useNetWorth();
+  const { accountsByClassification, deleteManualAccount, deletePlaidAccount, manualAccounts } = useNetWorth();
   const { assets, liabilities } = accountsByClassification;
 
   const handleAddAsset = () => {
@@ -94,6 +104,24 @@ const AccountsList = () => {
   const handleAddLiability = () => {
     setDefaultClassification('liability');
     setAddDialogOpen(true);
+  };
+
+  const handleDeleteClick = (account: { id: string; name: string; source: 'plaid' | 'manual' }) => {
+    setAccountToDelete(account);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!accountToDelete) return;
+    
+    if (accountToDelete.source === 'manual') {
+      await deleteManualAccount(accountToDelete.id);
+    } else {
+      await deletePlaidAccount(accountToDelete.id);
+    }
+    
+    setDeleteDialogOpen(false);
+    setAccountToDelete(null);
   };
 
   return (
@@ -143,7 +171,7 @@ const AccountsList = () => {
                     key={account.id}
                     {...account}
                     classification="asset"
-                    onDelete={account.source === 'manual' ? () => deleteManualAccount(account.id) : undefined}
+                    onDelete={() => handleDeleteClick({ id: account.id, name: account.name, source: account.source })}
                   />
                 ))
               )}
@@ -197,7 +225,7 @@ const AccountsList = () => {
                     key={account.id}
                     {...account}
                     classification="liability"
-                    onDelete={account.source === 'manual' ? () => deleteManualAccount(account.id) : undefined}
+                    onDelete={() => handleDeleteClick({ id: account.id, name: account.name, source: account.source })}
                   />
                 ))
               )}
@@ -211,6 +239,28 @@ const AccountsList = () => {
         onOpenChange={setAddDialogOpen}
         defaultClassification={defaultClassification}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="brutalist-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove "{accountToDelete?.name}"? 
+              {accountToDelete?.source === 'plaid' && ' This will disconnect it from your linked bank.'}
+              {' '}This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="brutalist-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="brutalist-button bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

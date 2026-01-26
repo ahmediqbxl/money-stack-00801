@@ -83,7 +83,7 @@ export const useNetWorth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { accounts: plaidAccounts } = useEncryptedDatabase();
+  const { accounts: plaidAccounts, deleteAccount, loadAccounts } = useEncryptedDatabase();
 
   // Load manual accounts
   const loadManualAccounts = useCallback(async () => {
@@ -341,6 +341,27 @@ export const useNetWorth = () => {
     }
   }, [toast, loadManualAccounts]);
 
+  // Delete Plaid account
+  const deletePlaidAccount = useCallback(async (accountId: string) => {
+    try {
+      await deleteAccount(accountId);
+
+      toast({
+        title: "Account Removed",
+        description: "Connected account has been removed",
+      });
+
+      await loadAccounts();
+    } catch (error) {
+      console.error('Error deleting Plaid account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove connected account",
+        variant: "destructive",
+      });
+    }
+  }, [deleteAccount, loadAccounts, toast]);
+
   // Add goal
   const addGoal = useCallback(async (
     goal: Omit<NetWorthGoal, 'id' | 'created_at' | 'updated_at' | 'is_achieved' | 'achieved_date'>
@@ -516,6 +537,7 @@ export const useNetWorth = () => {
     addManualAccount,
     updateManualAccount,
     deleteManualAccount,
+    deletePlaidAccount,
     addGoal,
     loadAllData,
   };
