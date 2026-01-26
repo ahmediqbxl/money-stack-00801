@@ -189,7 +189,7 @@ export const useEncryptedDatabase = () => {
     };
   }, []);
 
-  // Load and decrypt accounts
+  // Load and decrypt accounts with caching
   const loadAccounts = useCallback(async () => {
     if (!user?.id) return [];
     
@@ -197,6 +197,15 @@ export const useEncryptedDatabase = () => {
     if (!password) return [];
 
     try {
+      // Try to load from cache first for instant display
+      const cacheKey = `accounts_cache_${user.id}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        // Set cached data immediately for fast UI
+        setAccounts(cachedData);
+      }
+
       const rawAccounts = await databaseService.getAccounts();
       
       const decryptedAccounts = await Promise.all(
@@ -230,6 +239,9 @@ export const useEncryptedDatabase = () => {
         })
       );
 
+      // Cache for next time
+      sessionStorage.setItem(cacheKey, JSON.stringify(decryptedAccounts));
+      
       setAccounts(decryptedAccounts);
       return decryptedAccounts;
     } catch (error) {

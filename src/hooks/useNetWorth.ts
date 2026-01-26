@@ -85,7 +85,7 @@ export const useNetWorth = () => {
   const { toast } = useToast();
   const { accounts: plaidAccounts, deleteAccount, loadAccounts } = useEncryptedDatabase();
 
-  // Load manual accounts
+  // Load manual accounts with caching
   const loadManualAccounts = useCallback(async () => {
     if (!user?.id) return;
     
@@ -93,6 +93,14 @@ export const useNetWorth = () => {
     if (!password) return;
 
     try {
+      // Try to load from cache first for instant display
+      const cacheKey = `manual_accounts_cache_${user.id}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        setManualAccounts(cachedData);
+      }
+
       const { data, error } = await supabase
         .from('manual_accounts')
         .select('*')
@@ -126,6 +134,9 @@ export const useNetWorth = () => {
         })
       );
 
+      // Cache for next time
+      sessionStorage.setItem(cacheKey, JSON.stringify(decrypted));
+      
       setManualAccounts(decrypted);
     } catch (error) {
       console.error('Error loading manual accounts:', error);
@@ -197,8 +208,8 @@ export const useNetWorth = () => {
   // Add manual account
   const addManualAccount = useCallback(async (
     account: Omit<ManualAccount, 'id' | 'created_at' | 'updated_at' | 'is_active'>
-  ) => {
-    if (!user?.id) return;
+  ): Promise<boolean> => {
+    if (!user?.id) return false;
 
     const password = getStoredEncryptionPassword();
     if (!password) {
@@ -207,7 +218,7 @@ export const useNetWorth = () => {
         description: "Please sign in to add accounts",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     try {
@@ -236,12 +247,17 @@ export const useNetWorth = () => {
 
       if (error) throw error;
 
+      // Invalidate cache
+      sessionStorage.removeItem(`manual_accounts_cache_${user.id}`);
+
       toast({
         title: "Account Added",
         description: `${account.name} has been added`,
       });
 
+      // Immediately reload to show the new account
       await loadManualAccounts();
+      return true;
     } catch (error) {
       console.error('Error adding manual account:', error);
       toast({
@@ -249,6 +265,7 @@ export const useNetWorth = () => {
         description: "Failed to add account",
         variant: "destructive",
       });
+      return false;
     }
   }, [user?.id, toast, loadManualAccounts]);
 
@@ -315,7 +332,7 @@ export const useNetWorth = () => {
     }
   }, [user?.id, manualAccounts, toast, loadManualAccounts]);
 
-  // Delete manual account
+  // Delete manual account and invalidate cache
   const deleteManualAccount = useCallback(async (accountId: string) => {
     try {
       const { error } = await supabase
@@ -324,6 +341,11 @@ export const useNetWorth = () => {
         .eq('id', accountId);
 
       if (error) throw error;
+
+      // Invalidate cache
+      if (user?.id) {
+        sessionStorage.removeItem(`manual_accounts_cache_${user.id}`);
+      }
 
       toast({
         title: "Account Removed",
@@ -339,7 +361,7 @@ export const useNetWorth = () => {
         variant: "destructive",
       });
     }
-  }, [toast, loadManualAccounts]);
+  }, [toast, loadManualAccounts, user?.id]);
 
   // Delete Plaid account
   const deletePlaidAccount = useCallback(async (accountId: string) => {
