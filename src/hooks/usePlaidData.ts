@@ -60,15 +60,8 @@ export const usePlaidData = () => {
     // The server only sees encrypted blobs, not the actual transaction data
     console.log('⚠️ AI auto-categorization is disabled with zero-knowledge encryption');
     console.log('📝 Users must manually categorize their transactions');
-    
-    // Show a one-time toast about this
-    if (transactionsToProcess.length > 0) {
-      toast({
-        title: "Manual Categorization Required",
-        description: "AI categorization is disabled for privacy. Your data is encrypted end-to-end.",
-      });
-    }
-  }, [toast]);
+    // No notification shown - users can manually categorize in Transaction Manager
+  }, []);
 
   const fetchPlaidData = useCallback(async (
     accessToken?: string, 
