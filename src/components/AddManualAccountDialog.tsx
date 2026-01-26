@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useNetWorth, AccountClassification } from '@/hooks/useNetWorth';
+import { useNetWorth, AccountClassification, ManualAccount } from '@/hooks/useNetWorth';
 
 interface AddManualAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultClassification?: AccountClassification;
+  editAccount?: ManualAccount | null;
 }
 
 const ASSET_TYPES = [
@@ -40,7 +41,8 @@ const LIABILITY_TYPES = [
 const AddManualAccountDialog = ({ 
   open, 
   onOpenChange, 
-  defaultClassification = 'asset' 
+  defaultClassification = 'asset',
+  editAccount = null,
 }: AddManualAccountDialogProps) => {
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState('');
@@ -49,9 +51,28 @@ const AddManualAccountDialog = ({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { addManualAccount } = useNetWorth();
+  const { addManualAccount, updateManualAccount } = useNetWorth();
 
+  const isEditMode = !!editAccount;
   const accountTypes = classification === 'asset' ? ASSET_TYPES : LIABILITY_TYPES;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editAccount) {
+      setName(editAccount.name);
+      setAccountType(editAccount.account_type);
+      setClassification(editAccount.classification);
+      setBalance(editAccount.balance.toString());
+      setNotes(editAccount.notes || '');
+    } else {
+      // Reset form for add mode
+      setName('');
+      setAccountType('');
+      setClassification(defaultClassification);
+      setBalance('');
+      setNotes('');
+    }
+  }, [editAccount, defaultClassification, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,22 +82,36 @@ const AddManualAccountDialog = ({
     setIsSubmitting(true);
     
     try {
-      const success = await addManualAccount({
-        name: name.trim(),
-        account_type: accountType,
-        classification,
-        balance: parseFloat(balance) || 0,
-        currency: 'USD',
-        notes: notes.trim() || undefined,
-      });
-
-      if (success) {
-        // Reset form only on success
-        setName('');
-        setAccountType('');
-        setBalance('');
-        setNotes('');
+      if (isEditMode && editAccount) {
+        // Update existing account
+        await updateManualAccount(editAccount.id, {
+          name: name.trim(),
+          account_type: accountType,
+          classification,
+          balance: parseFloat(balance) || 0,
+          currency: 'USD',
+          notes: notes.trim() || undefined,
+        });
         onOpenChange(false);
+      } else {
+        // Add new account
+        const success = await addManualAccount({
+          name: name.trim(),
+          account_type: accountType,
+          classification,
+          balance: parseFloat(balance) || 0,
+          currency: 'USD',
+          notes: notes.trim() || undefined,
+        });
+
+        if (success) {
+          // Reset form only on success
+          setName('');
+          setAccountType('');
+          setBalance('');
+          setNotes('');
+          onOpenChange(false);
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -85,7 +120,15 @@ const AddManualAccountDialog = ({
 
   const handleClassificationChange = (value: AccountClassification) => {
     setClassification(value);
-    setAccountType(''); // Reset account type when classification changes
+    // Only reset account type if the new classification doesn't include the current type
+    const newTypes = value === 'asset' ? ASSET_TYPES : LIABILITY_TYPES;
+    if (!newTypes.includes(accountType)) {
+      setAccountType('');
+    }
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
   };
 
   return (
@@ -93,10 +136,13 @@ const AddManualAccountDialog = ({
       <DialogContent className="brutalist-card border-4 sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl font-black">
-            Add {classification === 'asset' ? 'Asset' : 'Liability'}
+            {isEditMode ? 'Edit' : 'Add'} {classification === 'asset' ? 'Asset' : 'Liability'}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Track a new {classification === 'asset' ? 'asset' : 'liability'} that isn't linked to a bank.
+            {isEditMode 
+              ? `Update the details for this ${classification === 'asset' ? 'asset' : 'liability'}.`
+              : `Track a new ${classification === 'asset' ? 'asset' : 'liability'} that isn't linked to a bank.`
+            }
           </DialogDescription>
         </DialogHeader>
         
@@ -193,7 +239,7 @@ const AddManualAccountDialog = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               className="brutalist-button"
             >
               Cancel
@@ -207,7 +253,10 @@ const AddManualAccountDialog = ({
                   : 'bg-destructive text-destructive-foreground'
               }`}
             >
-              {isSubmitting ? 'Adding...' : 'Add Account'}
+              {isSubmitting 
+                ? (isEditMode ? 'Saving...' : 'Adding...') 
+                : (isEditMode ? 'Save Changes' : 'Add Account')
+              }
             </Button>
           </DialogFooter>
         </form>

@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useNetWorth, AccountClassification, getAutoClassification } from '@/hooks/useNetWorth';
+import { useNetWorth, AccountClassification, getAutoClassification, ManualAccount } from '@/hooks/useNetWorth';
 import AddManualAccountDialog from './AddManualAccountDialog';
 
 interface AccountItemProps {
@@ -99,14 +99,32 @@ const AccountItem = ({ name, balance, type, source, classification, isOverridden
             </TooltipProvider>
           )}
           {source === 'manual' && onEdit && (
-            <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
-              <Pencil className="w-4 h-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Edit Account</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {onDelete && (
-            <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove Account</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
       </div>
@@ -121,18 +139,30 @@ const AccountsList = () => {
   const [defaultClassification, setDefaultClassification] = useState<AccountClassification>('asset');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<{ id: string; name: string; source: 'plaid' | 'manual' } | null>(null);
+  const [editAccount, setEditAccount] = useState<ManualAccount | null>(null);
   
   const { accountsByClassification, deleteManualAccount, deletePlaidAccount, updateAccountClassification, manualAccounts } = useNetWorth();
   const { assets, liabilities } = accountsByClassification;
 
   const handleAddAsset = () => {
+    setEditAccount(null);
     setDefaultClassification('asset');
     setAddDialogOpen(true);
   };
 
   const handleAddLiability = () => {
+    setEditAccount(null);
     setDefaultClassification('liability');
     setAddDialogOpen(true);
+  };
+
+  const handleEditAccount = (accountId: string) => {
+    const account = manualAccounts.find(a => a.id === accountId);
+    if (account) {
+      setEditAccount(account);
+      setDefaultClassification(account.classification);
+      setAddDialogOpen(true);
+    }
   };
 
   const handleDeleteClick = (account: { id: string; name: string; source: 'plaid' | 'manual' }) => {
@@ -151,6 +181,13 @@ const AccountsList = () => {
     
     setDeleteDialogOpen(false);
     setAccountToDelete(null);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setAddDialogOpen(open);
+    if (!open) {
+      setEditAccount(null);
+    }
   };
 
   return (
@@ -200,6 +237,7 @@ const AccountsList = () => {
                     key={account.id}
                     {...account}
                     classification="asset"
+                    onEdit={account.source === 'manual' ? () => handleEditAccount(account.id) : undefined}
                     onDelete={() => handleDeleteClick({ id: account.id, name: account.name, source: account.source })}
                     onReclassify={account.source === 'plaid' ? () => updateAccountClassification(account.id, 'liability') : undefined}
                   />
@@ -255,6 +293,7 @@ const AccountsList = () => {
                     key={account.id}
                     {...account}
                     classification="liability"
+                    onEdit={account.source === 'manual' ? () => handleEditAccount(account.id) : undefined}
                     onDelete={() => handleDeleteClick({ id: account.id, name: account.name, source: account.source })}
                     onReclassify={account.source === 'plaid' ? () => updateAccountClassification(account.id, 'asset') : undefined}
                   />
@@ -267,8 +306,9 @@ const AccountsList = () => {
 
       <AddManualAccountDialog
         open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
+        onOpenChange={handleDialogClose}
         defaultClassification={defaultClassification}
+        editAccount={editAccount}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

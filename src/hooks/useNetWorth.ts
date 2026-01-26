@@ -422,6 +422,65 @@ export const useNetWorth = () => {
     }
   }, [user?.id, toast, loadGoals]);
 
+  // Update goal
+  const updateGoal = useCallback(async (
+    goalId: string,
+    updates: Partial<Omit<NetWorthGoal, 'id' | 'created_at' | 'updated_at'>>
+  ) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('net_worth_goals')
+        .update(updates)
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Goal Updated",
+        description: "Changes saved successfully",
+      });
+
+      await loadGoals();
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update goal",
+        variant: "destructive",
+      });
+    }
+  }, [user?.id, toast, loadGoals]);
+
+  // Delete goal
+  const deleteGoal = useCallback(async (goalId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('net_worth_goals')
+        .delete()
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Goal Deleted",
+        description: "Goal has been removed",
+      });
+
+      await loadGoals();
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete goal",
+        variant: "destructive",
+      });
+    }
+  }, [user?.id, toast, loadGoals]);
+
   // Calculate net worth from all accounts
   const calculateNetWorth = useCallback(() => {
     let totalAssets = 0;
@@ -573,6 +632,8 @@ export const useNetWorth = () => {
     deleteManualAccount,
     deletePlaidAccount,
     addGoal,
+    updateGoal,
+    deleteGoal,
     loadAllData,
   };
 };
