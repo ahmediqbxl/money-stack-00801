@@ -138,6 +138,7 @@ const PricingCards: React.FC<PricingCardsProps> = ({ onContinueFree }) => {
                   : formatPrice(STRIPE_PRICES.yearly.amount)
                 }
               </span>
+              <span className="text-sm font-medium text-muted-foreground ml-1">CAD</span>
               <span className="text-muted-foreground">
                 /{billingInterval === 'month' ? 'month' : 'year'}
               </span>
