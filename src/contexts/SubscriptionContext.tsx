@@ -32,6 +32,7 @@ export const useSubscription = () => {
 
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, session } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [state, setState] = useState<SubscriptionState>({
     isLoading: true,
     isSubscribed: false,
@@ -42,6 +43,24 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     error: null,
   });
 
+  // Check if user is admin
+  const checkAdminStatus = useCallback(async () => {
+    if (!user) {
+      setIsAdmin(false);
+      return false;
+    }
+    
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    const adminStatus = data?.role === 'admin';
+    setIsAdmin(adminStatus);
+    return adminStatus;
+  }, [user]);
+
   const checkSubscription = useCallback(async () => {
     if (!session?.access_token) {
       setState(prev => ({ ...prev, isLoading: false, isSubscribed: false, tier: 'free' }));
@@ -50,6 +69,21 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      // First check if user is admin - admins get Pro access automatically
+      const adminStatus = await checkAdminStatus();
+      if (adminStatus) {
+        setState({
+          isLoading: false,
+          isSubscribed: true,
+          tier: 'pro',
+          interval: null,
+          priceId: null,
+          subscriptionEnd: null,
+          error: null,
+        });
+        return;
+      }
       
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
@@ -88,7 +122,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         error: error instanceof Error ? error.message : 'Failed to check subscription',
       }));
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, checkAdminStatus]);
 
   const createCheckout = useCallback(async (interval: SubscriptionInterval) => {
     if (!session?.access_token) {
