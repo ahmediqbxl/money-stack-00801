@@ -18,6 +18,9 @@ export type Database = {
         Row: {
           account_number: string | null
           account_type: string
+          auto_classification:
+            | Database["public"]["Enums"]["account_classification"]
+            | null
           balance: number
           bank_name: string
           connected_at: string
@@ -29,11 +32,17 @@ export type Database = {
           last_synced_at: string | null
           provider: string
           updated_at: string
+          user_classification:
+            | Database["public"]["Enums"]["account_classification"]
+            | null
           user_id: string
         }
         Insert: {
           account_number?: string | null
           account_type: string
+          auto_classification?:
+            | Database["public"]["Enums"]["account_classification"]
+            | null
           balance?: number
           bank_name: string
           connected_at?: string
@@ -45,11 +54,17 @@ export type Database = {
           last_synced_at?: string | null
           provider: string
           updated_at?: string
+          user_classification?:
+            | Database["public"]["Enums"]["account_classification"]
+            | null
           user_id: string
         }
         Update: {
           account_number?: string | null
           account_type?: string
+          auto_classification?:
+            | Database["public"]["Enums"]["account_classification"]
+            | null
           balance?: number
           bank_name?: string
           connected_at?: string
@@ -61,6 +76,9 @@ export type Database = {
           last_synced_at?: string | null
           provider?: string
           updated_at?: string
+          user_classification?:
+            | Database["public"]["Enums"]["account_classification"]
+            | null
           user_id?: string
         }
         Relationships: [
@@ -142,6 +160,144 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "categories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_accounts: {
+        Row: {
+          account_type: string
+          balance: number
+          classification: Database["public"]["Enums"]["account_classification"]
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          balance?: number
+          classification: Database["public"]["Enums"]["account_classification"]
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          balance?: number
+          classification?: Database["public"]["Enums"]["account_classification"]
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      net_worth_goals: {
+        Row: {
+          achieved_date: string | null
+          created_at: string
+          description: string | null
+          goal_name: string
+          id: string
+          is_achieved: boolean
+          target_amount: number
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achieved_date?: string | null
+          created_at?: string
+          description?: string | null
+          goal_name: string
+          id?: string
+          is_achieved?: boolean
+          target_amount: number
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achieved_date?: string | null
+          created_at?: string
+          description?: string | null
+          goal_name?: string
+          id?: string
+          is_achieved?: boolean
+          target_amount?: number
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "net_worth_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      net_worth_snapshots: {
+        Row: {
+          account_breakdown: Json | null
+          created_at: string
+          id: string
+          net_worth: number
+          snapshot_date: string
+          total_assets: number
+          total_liabilities: number
+          user_id: string
+        }
+        Insert: {
+          account_breakdown?: Json | null
+          created_at?: string
+          id?: string
+          net_worth?: number
+          snapshot_date: string
+          total_assets?: number
+          total_liabilities?: number
+          user_id: string
+        }
+        Update: {
+          account_breakdown?: Json | null
+          created_at?: string
+          id?: string
+          net_worth?: number
+          snapshot_date?: string
+          total_assets?: number
+          total_liabilities?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "net_worth_snapshots_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -297,6 +453,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auto_classification: {
+        Args: { account_type: string }
+        Returns: Database["public"]["Enums"]["account_classification"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -307,6 +467,7 @@ export type Database = {
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      account_classification: "asset" | "liability"
       app_role: "admin" | "user"
       approval_status: "pending" | "approved" | "rejected"
     }
@@ -436,6 +597,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_classification: ["asset", "liability"],
       app_role: ["admin", "user"],
       approval_status: ["pending", "approved", "rejected"],
     },
