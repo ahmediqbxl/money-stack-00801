@@ -1,1 +1,31 @@
 project_id = "fhrjkmfqdvtknszjymuh"
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.categorize-transactions]
+verify_jwt = false
+
+[functions.create-plaid-link-token]
+verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = false
+
+[functions.exchange-plaid-token]
+verify_jwt = false
+
+[functions.fetch-plaid-data]
+verify_jwt = false
+
+[functions.generate-budget-allocation]
+verify_jwt = false
+
+[functions.keep-alive]
+verify_jwt = false
