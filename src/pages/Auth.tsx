@@ -34,10 +34,48 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn, signUp, user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const email = formData.get('reset-email') as string;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setResetEmailSent(true);
+        toast({
+          title: "Check your email",
+          description: "We've sent you a password reset link.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
@@ -373,6 +411,65 @@ const Auth = () => {
                         {isLoading ? "Creating Account..." : "Create Account"}
                       </Button>
                     </form>
+                  ) : showForgotPassword ? (
+                    resetEmailSent ? (
+                      <div className="text-center space-y-4">
+                        <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                          <Mail className="w-7 h-7 text-emerald-600" />
+                        </div>
+                        <h3 className="text-xl font-bold">Check your email</h3>
+                        <p className="text-muted-foreground text-sm">
+                          We've sent a password reset link to your email address.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full font-bold border-2 border-foreground"
+                          onClick={() => {
+                            setShowForgotPassword(false);
+                            setResetEmailSent(false);
+                          }}
+                        >
+                          Back to Sign In
+                        </Button>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                        <div className="text-center mb-4">
+                          <h2 className="text-2xl font-display font-black mb-2">Reset Password</h2>
+                          <p className="text-muted-foreground text-sm">
+                            Enter your email to receive a reset link
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-email" className="font-bold">Email</Label>
+                          <Input
+                            id="reset-email"
+                            name="reset-email"
+                            type="email"
+                            placeholder="john@example.com"
+                            required
+                            className="h-12 border-2 border-foreground"
+                          />
+                        </div>
+                        
+                        <Button
+                          type="submit"
+                          className="w-full h-12 font-bold border-2 border-foreground shadow-brutalist hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Sending..." : "Send Reset Link"}
+                        </Button>
+                        
+                        <button
+                          type="button"
+                          className="w-full text-sm font-bold text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowForgotPassword(false)}
+                        >
+                          ← Back to Sign In
+                        </button>
+                      </form>
+                    )
                   ) : (
                     <form onSubmit={handleSignIn} className="space-y-4">
                       <div className="space-y-2">
@@ -387,7 +484,16 @@ const Auth = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="signin-password" className="font-bold">Password</Label>
+                        <div className="flex justify-between items-center">
+                          <Label htmlFor="signin-password" className="font-bold">Password</Label>
+                          <button
+                            type="button"
+                            className="text-xs font-bold text-primary hover:underline"
+                            onClick={() => setShowForgotPassword(true)}
+                          >
+                            Forgot password?
+                          </button>
+                        </div>
                         <Input
                           id="signin-password"
                           name="password"
