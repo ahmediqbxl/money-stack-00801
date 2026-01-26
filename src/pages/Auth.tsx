@@ -113,7 +113,7 @@ const Auth = () => {
         
         toast({
           title: "Account Created!",
-          description: "Welcome to NetWorth! Your data will be encrypted with your password.",
+          description: "Welcome to MoneyStack! Your data will be encrypted with your password.",
         });
         navigate('/');
       }
@@ -137,7 +137,7 @@ const Auth = () => {
         <div className="space-y-8">
           <div className="text-center lg:text-left">
             <h1 className="text-4xl lg:text-6xl font-display font-black tracking-tight mb-4">
-              NETWORTH
+              MONEYSTACK
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
               Track your assets and liabilities. Know your net worth. Reach your goals.

@@ -10,7 +10,7 @@ const Footer = () => {
             <div className="w-8 h-8 bg-primary flex items-center justify-center border-2 border-foreground">
               <Wallet className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-black text-lg">NETWORTH</span>
+            <span className="font-display font-black text-lg">MONEYSTACK</span>
           </div>
           <div className="flex items-center gap-6">
             <Link to="/terms" className="text-sm font-bold uppercase tracking-wider hover:text-primary transition-colors">
@@ -21,7 +21,7 @@ const Footer = () => {
             </Link>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
-            © {new Date().getFullYear()} NetWorth. All rights reserved.
+            © {new Date().getFullYear()} MoneyStack. All rights reserved.
           </p>
         </div>
         <div className="mt-6 pt-6 border-t-2 border-foreground/20 text-center">

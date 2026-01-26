@@ -88,7 +88,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="font-display text-2xl font-black tracking-tight">
-                  NETWORTH
+                  MONEYSTACK
                 </h1>
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Track Everything
