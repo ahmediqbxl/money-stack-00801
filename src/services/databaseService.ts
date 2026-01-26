@@ -121,20 +121,77 @@ class DatabaseService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Check if account already exists (only active ones)
-    const { data: existingAccounts } = await supabase
+    // First check by exact external_account_id match
+    const { data: exactMatch } = await supabase
       .from('accounts')
       .select('*')
       .eq('external_account_id', account.external_account_id)
       .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (exactMatch) {
+      console.log('Account already exists (exact match), updating balance:', exactMatch.id);
+      // Update the balance and sync time
+      const { data: updated, error: updateError } = await supabase
+        .from('accounts')
+        .update({
+          balance: account.balance,
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', exactMatch.id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error('Error updating account:', updateError);
+        throw updateError;
+      }
+      
+      return {
+        ...updated,
+        provider: updated.provider as 'plaid' | 'flinks'
+      };
+    }
+
+    // For sandbox reconnections: check if an account with same bank_name and account_type already exists
+    // This handles the case where Plaid sandbox generates new external_account_ids on reconnection
+    const { data: similarAccounts } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('account_type', account.account_type)
+      .eq('bank_name', account.bank_name)
+      .eq('provider', account.provider)
       .eq('is_active', true);
 
-    if (existingAccounts && existingAccounts.length > 0) {
-      const existingAccount = existingAccounts[0];
-      console.log('Account already exists:', existingAccount);
+    if (similarAccounts && similarAccounts.length > 0) {
+      const existingAccount = similarAccounts[0];
+      console.log('Found similar account (sandbox reconnection), updating:', existingAccount.id);
+      
+      // Update the existing account with new external_account_id and balance
+      const { data: updated, error: updateError } = await supabase
+        .from('accounts')
+        .update({
+          external_account_id: account.external_account_id,
+          balance: account.balance,
+          account_number: account.account_number,
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingAccount.id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error('Error updating similar account:', updateError);
+        throw updateError;
+      }
+      
       return {
-        ...existingAccount,
-        provider: existingAccount.provider as 'plaid' | 'flinks'
+        ...updated,
+        provider: updated.provider as 'plaid' | 'flinks'
       };
     }
 
