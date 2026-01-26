@@ -1,42 +1,118 @@
-import React, { useState } from 'react';
-import { Target, Plus, Check, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Target, Plus, Check, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useNetWorth } from '@/hooks/useNetWorth';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useNetWorth, NetWorthGoal } from '@/hooks/useNetWorth';
 
 const GoalsSection = () => {
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<NetWorthGoal | null>(null);
+  const [editGoal, setEditGoal] = useState<NetWorthGoal | null>(null);
   const [goalName, setGoalName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { goals, calculateNetWorth, addGoal } = useNetWorth();
+  const { goals, calculateNetWorth, addGoal, updateGoal, deleteGoal } = useNetWorth();
   const { netWorth } = calculateNetWorth();
+
+  const isEditMode = !!editGoal;
+
+  // Reset form when dialog opens/closes or when switching between add/edit
+  useEffect(() => {
+    if (editGoal) {
+      setGoalName(editGoal.goal_name);
+      setTargetAmount(editGoal.target_amount.toString());
+      setTargetDate(editGoal.target_date || '');
+      setDescription(editGoal.description || '');
+    } else {
+      setGoalName('');
+      setTargetAmount('');
+      setTargetDate('');
+      setDescription('');
+    }
+  }, [editGoal, dialogOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!goalName.trim() || !targetAmount) return;
 
     setIsSubmitting(true);
-    await addGoal({
-      goal_name: goalName.trim(),
-      target_amount: parseFloat(targetAmount),
-      target_date: targetDate || undefined,
-      description: description.trim() || undefined,
-    });
+    
+    if (isEditMode && editGoal) {
+      await updateGoal(editGoal.id, {
+        goal_name: goalName.trim(),
+        target_amount: parseFloat(targetAmount),
+        target_date: targetDate || undefined,
+        description: description.trim() || undefined,
+      });
+    } else {
+      await addGoal({
+        goal_name: goalName.trim(),
+        target_amount: parseFloat(targetAmount),
+        target_date: targetDate || undefined,
+        description: description.trim() || undefined,
+      });
+    }
 
     setGoalName('');
     setTargetAmount('');
     setTargetDate('');
     setDescription('');
+    setEditGoal(null);
     setIsSubmitting(false);
-    setAddDialogOpen(false);
+    setDialogOpen(false);
+  };
+
+  const handleAddClick = () => {
+    setEditGoal(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (goal: NetWorthGoal) => {
+    setEditGoal(goal);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (goal: NetWorthGoal) => {
+    setGoalToDelete(goal);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (goalToDelete) {
+      await deleteGoal(goalToDelete.id);
+      setDeleteDialogOpen(false);
+      setGoalToDelete(null);
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditGoal(null);
+    }
   };
 
   const getProgress = (targetAmount: number) => {
@@ -60,7 +136,7 @@ const GoalsSection = () => {
           Goals
         </h3>
         <Button 
-          onClick={() => setAddDialogOpen(true)}
+          onClick={handleAddClick}
           className="brutalist-button bg-secondary text-secondary-foreground"
           size="sm"
         >
@@ -77,7 +153,7 @@ const GoalsSection = () => {
             Set a net worth goal to track your progress
           </p>
           <Button 
-            onClick={() => setAddDialogOpen(true)}
+            onClick={handleAddClick}
             className="brutalist-button bg-secondary text-secondary-foreground"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -96,7 +172,7 @@ const GoalsSection = () => {
                 className={`brutalist-card p-4 ${isAchieved ? 'bg-accent/20' : ''}`}
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold">{goal.goal_name}</h4>
                       {isAchieved && (
@@ -110,12 +186,50 @@ const GoalsSection = () => {
                       <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
                     )}
                   </div>
-                  {goal.target_date && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(goal.target_date)}
+                  <div className="flex items-center gap-2">
+                    {goal.target_date && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        {formatDate(goal.target_date)}
+                      </div>
+                    )}
+                    <div className="flex gap-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditClick(goal)} 
+                              className="h-8 w-8 p-0"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit Goal</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleDeleteClick(goal)} 
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Delete Goal</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -145,12 +259,12 @@ const GoalsSection = () => {
         </div>
       )}
 
-      {/* Add Goal Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      {/* Add/Edit Goal Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="brutalist-card border-4 sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl font-black">
-              Set Net Worth Goal
+              {isEditMode ? 'Edit Goal' : 'Set Net Worth Goal'}
             </DialogTitle>
           </DialogHeader>
           
@@ -219,7 +333,7 @@ const GoalsSection = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setAddDialogOpen(false)}
+                onClick={() => handleDialogClose(false)}
                 className="brutalist-button"
               >
                 Cancel
@@ -229,12 +343,37 @@ const GoalsSection = () => {
                 disabled={isSubmitting || !goalName.trim() || !targetAmount}
                 className="brutalist-button bg-secondary text-secondary-foreground"
               >
-                {isSubmitting ? 'Creating...' : 'Create Goal'}
+                {isSubmitting 
+                  ? (isEditMode ? 'Saving...' : 'Creating...') 
+                  : (isEditMode ? 'Save Changes' : 'Create Goal')
+                }
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="brutalist-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Goal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{goalToDelete?.goal_name}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="brutalist-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="brutalist-button bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
