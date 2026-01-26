@@ -13,6 +13,8 @@ export interface DatabaseAccount {
   last_synced_at: string;
   is_active: boolean;
   updated_at?: string;
+  auto_classification?: 'asset' | 'liability' | null;
+  user_classification?: 'asset' | 'liability' | null;
 }
 
 export interface DatabaseTransaction {

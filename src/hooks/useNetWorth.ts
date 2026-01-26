@@ -68,7 +68,7 @@ export const getAutoClassification = (accountType: string): AccountClassificatio
   // Liabilities
   if (type.includes('credit') || type.includes('loan') ||
       type.includes('mortgage') || type.includes('line of credit') ||
-      type.includes('overdraft')) {
+      type.includes('overdraft') || type.includes('student')) {
     return 'liability';
   }
   
@@ -191,6 +191,12 @@ export const useNetWorth = () => {
 
       if (error) throw error;
       
+      // Invalidate cache and reload accounts
+      if (user?.id) {
+        sessionStorage.removeItem(`accounts_cache_${user.id}`);
+      }
+      await loadAccounts();
+      
       toast({
         title: "Classification Updated",
         description: `Account reclassified as ${classification}`,
@@ -203,7 +209,7 @@ export const useNetWorth = () => {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, user?.id, loadAccounts]);
 
   // Add manual account
   const addManualAccount = useCallback(async (
@@ -421,9 +427,10 @@ export const useNetWorth = () => {
     let totalAssets = 0;
     let totalLiabilities = 0;
 
-    // Process Plaid accounts
+    // Process Plaid accounts - use user_classification if set, otherwise auto
     plaidAccounts.forEach(account => {
-      const classification = getAutoClassification(account.account_type);
+      const autoClassification = getAutoClassification(account.account_type);
+      const classification = account.user_classification || autoClassification;
       const balance = Math.abs(account.balance);
       
       if (classification === 'asset') {
@@ -481,17 +488,22 @@ export const useNetWorth = () => {
 
   // Get accounts by classification
   const accountsByClassification = useMemo(() => {
-    const assets: Array<{ id: string; name: string; balance: number; type: string; source: 'plaid' | 'manual' }> = [];
-    const liabilities: Array<{ id: string; name: string; balance: number; type: string; source: 'plaid' | 'manual' }> = [];
+    const assets: Array<{ id: string; name: string; balance: number; type: string; source: 'plaid' | 'manual'; isOverridden?: boolean }> = [];
+    const liabilities: Array<{ id: string; name: string; balance: number; type: string; source: 'plaid' | 'manual'; isOverridden?: boolean }> = [];
 
     plaidAccounts.forEach(account => {
-      const classification = getAutoClassification(account.account_type);
+      // Use user_classification if set, otherwise fall back to auto classification
+      const autoClassification = getAutoClassification(account.account_type);
+      const classification = account.user_classification || autoClassification;
+      const isOverridden = account.user_classification && account.user_classification !== autoClassification;
+      
       const item = {
         id: account.id,
         name: account.bank_name,
         balance: Math.abs(account.balance),
         type: account.account_type,
         source: 'plaid' as const,
+        isOverridden,
       };
       
       if (classification === 'asset') {
