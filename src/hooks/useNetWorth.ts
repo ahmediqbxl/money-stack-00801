@@ -394,34 +394,6 @@ export const useNetWorth = () => {
     }
   }, [user?.id, toast, loadGoals]);
 
-  // Save daily snapshot
-  const saveDailySnapshot = useCallback(async () => {
-    if (!user?.id) return;
-
-    const { totalAssets, totalLiabilities, netWorth } = calculateNetWorth();
-
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      const { error } = await supabase
-        .from('net_worth_snapshots')
-        .upsert({
-          user_id: user.id,
-          snapshot_date: today,
-          total_assets: totalAssets,
-          total_liabilities: totalLiabilities,
-          net_worth: netWorth,
-        }, {
-          onConflict: 'user_id,snapshot_date',
-        });
-
-      if (error) throw error;
-      await loadSnapshots();
-    } catch (error) {
-      console.error('Error saving snapshot:', error);
-    }
-  }, [user?.id, loadSnapshots]);
-
   // Calculate net worth from all accounts
   const calculateNetWorth = useCallback(() => {
     let totalAssets = 0;
@@ -456,6 +428,34 @@ export const useNetWorth = () => {
       netWorth: totalAssets - totalLiabilities,
     };
   }, [plaidAccounts, manualAccounts]);
+
+  // Save daily snapshot
+  const saveDailySnapshot = useCallback(async () => {
+    if (!user?.id) return;
+
+    const { totalAssets, totalLiabilities, netWorth } = calculateNetWorth();
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { error } = await supabase
+        .from('net_worth_snapshots')
+        .upsert({
+          user_id: user.id,
+          snapshot_date: today,
+          total_assets: totalAssets,
+          total_liabilities: totalLiabilities,
+          net_worth: netWorth,
+        }, {
+          onConflict: 'user_id,snapshot_date',
+        });
+
+      if (error) throw error;
+      await loadSnapshots();
+    } catch (error) {
+      console.error('Error saving snapshot:', error);
+    }
+  }, [user?.id, loadSnapshots, calculateNetWorth]);
 
   // Get accounts by classification
   const accountsByClassification = useMemo(() => {
