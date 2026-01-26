@@ -80,10 +80,6 @@ const PricingCards: React.FC<PricingCardsProps> = ({ onContinueFree }) => {
             <CardDescription className="text-muted-foreground">
               Manual tracking only
             </CardDescription>
-            <div className="mt-4">
-              <span className="text-4xl font-black">$0</span>
-              <span className="text-muted-foreground">/forever</span>
-            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
