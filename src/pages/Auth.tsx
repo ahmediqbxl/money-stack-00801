@@ -37,6 +37,7 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
   const { signIn, signUp, user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -80,6 +81,13 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
+      // Store test mode preference in localStorage before OAuth redirect
+      if (isTestMode) {
+        localStorage.setItem('pendingTestUser', 'true');
+      } else {
+        localStorage.removeItem('pendingTestUser');
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -158,10 +166,8 @@ const Auth = () => {
       const email = formData.get('email') as string;
       const password = formData.get('password') as string;
       const fullName = formData.get('fullName') as string;
-      const isTestUser = formData.get('isTestUser') === 'on';
-
       const validatedData = signUpSchema.parse({ fullName, email, password });
-      const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName, isTestUser);
+      const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName, isTestMode);
 
       if (error) {
         toast({
@@ -298,6 +304,19 @@ const Auth = () => {
                     {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
                   </Button>
 
+                  {isSignUp && (
+                    <div className="flex items-center space-x-2 justify-center">
+                      <Checkbox 
+                        id="testModeMain" 
+                        checked={isTestMode}
+                        onCheckedChange={(checked) => setIsTestMode(checked === true)}
+                      />
+                      <Label htmlFor="testModeMain" className="text-sm cursor-pointer">
+                        Use Plaid Sandbox (test data)
+                      </Label>
+                    </div>
+                  )}
+
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t-2 border-foreground/20" />
@@ -388,7 +407,12 @@ const Auth = () => {
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <Checkbox id="isTestUser" name="isTestUser" />
+                        <Checkbox 
+                          id="isTestUser" 
+                          name="isTestUser" 
+                          checked={isTestMode}
+                          onCheckedChange={(checked) => setIsTestMode(checked === true)}
+                        />
                         <Label htmlFor="isTestUser" className="text-sm cursor-pointer">
                           Use Plaid Sandbox (test data)
                         </Label>
