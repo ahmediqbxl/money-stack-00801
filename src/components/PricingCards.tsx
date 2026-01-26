@@ -12,7 +12,7 @@ interface PricingCardsProps {
 
 const PricingCards: React.FC<PricingCardsProps> = ({ onContinueFree }) => {
   const { createCheckout, isSubscribed, tier, isLoading } = useSubscription();
-  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('year');
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (interval: 'month' | 'year') => {
