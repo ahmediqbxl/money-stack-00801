@@ -50,40 +50,40 @@ const AccountItem = ({ name, balance, type, source, classification, isOverridden
   const targetClassification = classification === 'asset' ? 'Liability' : 'Asset';
 
   return (
-    <div className="flex items-center justify-between p-4 border-2 border-foreground bg-card hover:bg-muted/50 transition-colors">
-      <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 flex items-center justify-center border-2 border-foreground ${
+    <div className="flex items-center justify-between p-3 sm:p-4 border-2 border-foreground bg-card hover:bg-muted/50 transition-colors gap-2">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border-2 border-foreground flex-shrink-0 ${
           classification === 'asset' ? 'bg-accent/20' : 'bg-destructive/20'
         }`}>
           {getIcon()}
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="font-bold">{name}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <p className="font-bold text-sm sm:text-base truncate">{name}</p>
             {isOverridden && (
-              <Badge variant="secondary" className="text-xs">OVERRIDE</Badge>
+              <Badge variant="secondary" className="text-[10px] sm:text-xs">OVERRIDE</Badge>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground capitalize">{type}</span>
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <span className="text-xs sm:text-sm text-muted-foreground capitalize">{type}</span>
             {source === 'plaid' && (
-              <Badge variant="outline" className="text-xs">PLAID</Badge>
+              <Badge variant="outline" className="text-[10px] sm:text-xs px-1 sm:px-2">PLAID</Badge>
             )}
             {source === 'manual' && (
-              <Badge variant="outline" className="text-xs">MANUAL</Badge>
+              <Badge variant="outline" className="text-[10px] sm:text-xs px-1 sm:px-2">MANUAL</Badge>
             )}
           </div>
         </div>
       </div>
       
-      <div className="flex items-center gap-4">
-        <span className={`text-xl font-bold font-display ${
+      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+        <span className={`text-base sm:text-xl font-bold font-display ${
           classification === 'asset' ? 'text-accent' : 'text-destructive'
         }`}>
           ${balance.toLocaleString()}
         </span>
         
-        <div className="flex gap-1">
+        <div className="hidden sm:flex gap-1">
           {source === 'plaid' && onReclassify && (
             <TooltipProvider>
               <Tooltip>
@@ -191,32 +191,32 @@ const AccountsList = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Assets Section */}
       <Collapsible open={assetsOpen} onOpenChange={setAssetsOpen}>
         <div className="brutalist-card">
           <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between p-4 border-b-2 border-foreground cursor-pointer hover:bg-muted/50">
-              <div className="flex items-center gap-3">
-                <div className="badge-asset">ASSETS</div>
-                <span className="font-bold text-lg">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b-2 border-foreground cursor-pointer hover:bg-muted/50 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div className="badge-asset text-[10px] sm:text-xs whitespace-nowrap">ASSETS</div>
+                <span className="font-bold text-sm sm:text-lg truncate">
                   ${assets.reduce((sum, a) => sum + a.balance, 0).toLocaleString()}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground text-xs sm:text-base hidden sm:inline">
                   ({assets.length} account{assets.length !== 1 ? 's' : ''})
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={(e) => { e.stopPropagation(); handleAddAsset(); }}
-                  className="brutalist-button h-8"
+                  className="brutalist-button h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Asset
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Add Asset</span>
                 </Button>
-                {assetsOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {assetsOpen ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
               </div>
             </div>
           </CollapsibleTrigger>
@@ -252,27 +252,27 @@ const AccountsList = () => {
       <Collapsible open={liabilitiesOpen} onOpenChange={setLiabilitiesOpen}>
         <div className="brutalist-card">
           <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between p-4 border-b-2 border-foreground cursor-pointer hover:bg-muted/50">
-              <div className="flex items-center gap-3">
-                <div className="badge-liability">LIABILITIES</div>
-                <span className="font-bold text-lg">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b-2 border-foreground cursor-pointer hover:bg-muted/50 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div className="badge-liability text-[10px] sm:text-xs whitespace-nowrap">LIABILITIES</div>
+                <span className="font-bold text-sm sm:text-lg truncate">
                   ${liabilities.reduce((sum, a) => sum + a.balance, 0).toLocaleString()}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground text-xs sm:text-base hidden sm:inline">
                   ({liabilities.length} account{liabilities.length !== 1 ? 's' : ''})
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={(e) => { e.stopPropagation(); handleAddLiability(); }}
-                  className="brutalist-button h-8"
+                  className="brutalist-button h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Liability
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Add Liability</span>
                 </Button>
-                {liabilitiesOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {liabilitiesOpen ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
               </div>
             </div>
           </CollapsibleTrigger>

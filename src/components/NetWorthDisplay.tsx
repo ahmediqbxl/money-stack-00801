@@ -28,13 +28,13 @@ const NetWorthDisplay = () => {
   const isChangePositive = change >= 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       {/* Main Net Worth Display */}
-      <div className="brutalist-card bg-card p-8 text-center">
-        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-2">
+      <div className="brutalist-card bg-card p-4 sm:p-8 text-center">
+        <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1 sm:mb-2">
           Total Net Worth
         </p>
-        <div className={`text-6xl md:text-8xl font-display font-black tracking-tight ${
+        <div className={`text-4xl sm:text-6xl md:text-8xl font-display font-black tracking-tight ${
           isPositive ? 'text-accent' : 'text-destructive'
         }`}>
           {netWorth < 0 && '-'}${Math.abs(netWorth).toLocaleString()}
@@ -42,35 +42,35 @@ const NetWorthDisplay = () => {
         
         {/* Change indicator */}
         {previousSnapshot && (
-          <div className={`inline-flex items-center gap-2 mt-4 px-4 py-2 border-2 border-foreground ${
+          <div className={`inline-flex flex-wrap items-center justify-center gap-1 sm:gap-2 mt-3 sm:mt-4 px-2 sm:px-4 py-1.5 sm:py-2 border-2 border-foreground ${
             isChangePositive ? 'bg-accent/20' : 'bg-destructive/20'
           }`}>
             {isChangePositive ? (
-              <ArrowUpRight className="w-5 h-5" />
+              <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
             ) : (
-              <ArrowDownRight className="w-5 h-5" />
+              <ArrowDownRight className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
-            <span className="font-bold">
+            <span className="font-bold text-sm sm:text-base">
               {isChangePositive ? '+' : ''}{formatCurrency(change)} ({changePercent}%)
             </span>
-            <span className="text-muted-foreground text-sm">vs yesterday</span>
+            <span className="text-muted-foreground text-xs sm:text-sm">vs yesterday</span>
           </div>
         )}
       </div>
 
       {/* Assets and Liabilities */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6">
         {/* Assets */}
-        <div className="brutalist-card bg-accent/10 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-accent flex items-center justify-center border-2 border-foreground">
-              <TrendingUp className="w-6 h-6 text-accent-foreground" />
+        <div className="brutalist-card bg-accent/10 p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent flex items-center justify-center border-2 border-foreground flex-shrink-0">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-accent-foreground" />
             </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Total Assets
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Assets
               </p>
-              <p className="text-3xl font-display font-black text-accent">
+              <p className="text-xl sm:text-3xl font-display font-black text-accent truncate">
                 ${totalAssets.toLocaleString()}
               </p>
             </div>
@@ -78,16 +78,16 @@ const NetWorthDisplay = () => {
         </div>
 
         {/* Liabilities */}
-        <div className="brutalist-card bg-destructive/10 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-destructive flex items-center justify-center border-2 border-foreground">
-              <TrendingDown className="w-6 h-6 text-destructive-foreground" />
+        <div className="brutalist-card bg-destructive/10 p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-destructive flex items-center justify-center border-2 border-foreground flex-shrink-0">
+              <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-destructive-foreground" />
             </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Total Liabilities
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Liabilities
               </p>
-              <p className="text-3xl font-display font-black text-destructive">
+              <p className="text-xl sm:text-3xl font-display font-black text-destructive truncate">
                 ${totalLiabilities.toLocaleString()}
               </p>
             </div>
