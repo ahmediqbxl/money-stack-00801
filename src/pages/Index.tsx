@@ -18,8 +18,10 @@ import UpgradePrompt from '@/components/UpgradePrompt';
 
 const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isTestUser, setIsTestUser] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
   const [hasSeenLanding, setHasSeenLanding] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const { isSubscribed, isLoading: subscriptionLoading, tier, openCustomerPortal } = useSubscription();
@@ -36,34 +38,49 @@ const Index = () => {
     clearReauthFlag,
   } = usePlaidData();
 
-  // Check if user is admin
+  // Check user profile (admin and test user status)
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) return;
+    const checkUserProfile = async () => {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
       
-      const { data } = await supabase
+      // Check admin status
+      const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
       
-      setIsAdmin(data?.role === 'admin');
+      setIsAdmin(roleData?.role === 'admin');
+      
+      // Check test user status
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_test_user')
+        .eq('id', user.id)
+        .single();
+      
+      setIsTestUser(profileData?.is_test_user === true);
+      setProfileLoading(false);
     };
 
-    checkAdminStatus();
+    checkUserProfile();
   }, [user]);
 
-  // Check if user has seen landing before (has accounts or is subscribed)
+  // Check if user has seen landing before (has accounts, is subscribed, or is test user)
   useEffect(() => {
-    if (subscriptionLoading) return;
+    if (subscriptionLoading || profileLoading) return;
     
-    if (isSubscribed || accounts.length > 0) {
+    // Test users skip the landing page - they get sandbox access
+    if (isTestUser || isSubscribed || accounts.length > 0) {
       setShowLanding(false);
       setHasSeenLanding(true);
     } else if (!hasSeenLanding) {
       setShowLanding(true);
     }
-  }, [isSubscribed, accounts.length, subscriptionLoading, hasSeenLanding]);
+  }, [isSubscribed, accounts.length, subscriptionLoading, hasSeenLanding, isTestUser, profileLoading]);
 
   const handleContinueFree = () => {
     setShowLanding(false);
@@ -78,8 +95,11 @@ const Index = () => {
     });
   };
 
+  // Test users and subscribed users can access Plaid features
+  const hasPlaidAccess = isSubscribed || isTestUser;
+
   const handleRefresh = async () => {
-    if (!isSubscribed) {
+    if (!hasPlaidAccess) {
       toast({
         title: "Pro Feature",
         description: "Upgrade to Pro to sync your bank accounts automatically.",
@@ -95,7 +115,7 @@ const Index = () => {
   };
 
   const handleAddAccount = () => {
-    if (!isSubscribed) {
+    if (!hasPlaidAccess) {
       toast({
         title: "Pro Feature",
         description: "Upgrade to Pro to link your bank accounts.",
@@ -127,7 +147,7 @@ const Index = () => {
   };
 
   // Show loading state
-  if (subscriptionLoading) {
+  if (subscriptionLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -138,8 +158,8 @@ const Index = () => {
     );
   }
 
-  // Show subscription landing for new free users
-  if (showLanding && !isSubscribed) {
+  // Show subscription landing for new free users (not test users)
+  if (showLanding && !isSubscribed && !isTestUser) {
     return <SubscriptionLanding onContinueFree={handleContinueFree} />;
   }
 
@@ -220,8 +240,8 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hidden Plaid Connect - Only for Pro users */}
-      {isSubscribed && (
+      {/* Hidden Plaid Connect - For Pro users and test users */}
+      {hasPlaidAccess && (
         <>
           <div style={{ display: requiresReauth ? 'block' : 'none' }}>
             <PlaidConnect 
@@ -247,7 +267,7 @@ const Index = () => {
 
         {/* Action Bar */}
         <div className="flex flex-wrap items-center justify-center gap-4">
-          {isSubscribed ? (
+          {hasPlaidAccess ? (
             <>
               <Button 
                 onClick={handleAddAccount}
