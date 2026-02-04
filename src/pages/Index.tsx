@@ -167,49 +167,49 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b-4 border-foreground bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary flex items-center justify-center border-2 border-foreground">
-                <Wallet className="w-6 h-6 text-primary-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary flex items-center justify-center border-2 border-foreground flex-shrink-0">
+                <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="font-display text-2xl font-black tracking-tight">
+              <div className="min-w-0">
+                <h1 className="font-display text-lg sm:text-2xl font-black tracking-tight truncate">
                   MONEYSTACK
                 </h1>
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground hidden sm:block">
                   Track Everything
                 </p>
               </div>
             </div>
 
             {/* User Actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
               {/* Subscription Badge */}
               {isSubscribed ? (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleManageSubscription}
-                  className="brutalist-button bg-primary/10 border-primary"
+                  className="brutalist-button bg-primary/10 border-primary px-2 sm:px-3"
                 >
-                  <Crown className="w-4 h-4 mr-2 text-primary" />
-                  Pro
+                  <Crown className="w-4 h-4 sm:mr-2 text-primary" />
+                  <span className="hidden sm:inline">Pro</span>
                 </Button>
               ) : (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowLanding(true)}
-                  className="brutalist-button"
+                  className="brutalist-button px-2 sm:px-3"
                 >
-                  <Crown className="w-4 h-4 mr-2" />
-                  Upgrade
+                  <Crown className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Upgrade</span>
                 </Button>
               )}
 
-              <div className="hidden md:flex items-center gap-2 text-sm">
+              <div className="hidden lg:flex items-center gap-2 text-sm">
                 <User className="w-4 h-4" />
                 <span className="font-medium">{user?.email}</span>
               </div>
@@ -219,10 +219,10 @@ const Index = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => navigate('/admin')}
-                  className="brutalist-button"
+                  className="brutalist-button px-2 sm:px-3"
                 >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Admin
+                  <Shield className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Admin</span>
                 </Button>
               )}
               
@@ -230,10 +230,10 @@ const Index = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={handleSignOut}
-                className="brutalist-button"
+                className="brutalist-button px-2 sm:px-3"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -261,7 +261,7 @@ const Index = () => {
       )}
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 space-y-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
         {/* Net Worth Display */}
         <NetWorthDisplay />
 
