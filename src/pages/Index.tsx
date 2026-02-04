@@ -314,19 +314,6 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Sandbox Mode Banner */}
-      {isTestUser && (
-        <div className="fixed bottom-0 left-0 right-0 bg-muted border-t-2 border-foreground/20 py-3 px-4 z-50">
-          <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 text-sm">
-            <span className="font-bold text-muted-foreground">🧪 Sandbox Mode</span>
-            <span className="text-muted-foreground">—</span>
-            <span className="text-foreground">
-              Use credentials: <code className="bg-background px-2 py-0.5 rounded border font-mono font-bold">user_good</code> / <code className="bg-background px-2 py-0.5 rounded border font-mono font-bold">pass_good</code>
-            </span>
-          </div>
-        </div>
-      )}
-
       <Footer />
     </div>
   );
